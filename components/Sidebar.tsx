@@ -17,7 +17,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   const top = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
     { icon: PillBottle, label:'Add Medicine Reminder', href: '/reminder' },
     { icon: TrendingUp, label: 'Progress', href: '/progress' },
     { icon: ClipboardList, label: 'Medicine Reminder List', href: '/medicine-list' },

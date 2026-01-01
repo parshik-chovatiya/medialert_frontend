@@ -1,9 +1,15 @@
-import React from 'react'
+"use client";
 
-const page = () => {
+import ReminderWizard from "@/components/reminder/ReminderWizard";
+
+
+
+export default function ReminderPage() {
+
+
   return (
-    <div>page</div>
-  )
+    <div className="py-8">
+        <ReminderWizard/>
+    </div>
+  );
 }
-
-export default page
