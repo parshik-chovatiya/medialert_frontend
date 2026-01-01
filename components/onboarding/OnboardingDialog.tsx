@@ -15,7 +15,7 @@ import { onboardingSchema, OnboardingData } from "./schema";
 import image1 from "../../public/step1.png";
 import image2 from "@/public/step2.png";
 import Image from "next/image";
-import axiosClient from "@/lib/axios/axiosClient";
+import axiosClient from "@/lib/axiosClient";
 import { setOnboardingData } from "@/lib/utils";
 
 interface Props {

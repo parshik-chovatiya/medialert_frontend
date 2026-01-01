@@ -1,5 +1,8 @@
+"use client";
 import DateStrip from "@/components/date-strip";
+import OnboardingDialog from "@/components/onboarding/OnboardingDialog";
 import Image from "next/image";
+import { use, useState } from "react";
 interface Dose {
     id: number;
     name: string;
@@ -69,6 +72,7 @@ const UpcomingDosesSection: React.FC = () => {
 };
 
 export default function Dashboard() {
+    const [open, setOpen] = useState(true);
     return (
         <div className="h-[calc(100vh-10rem)]">
             <main className="pb-4">
@@ -81,7 +85,7 @@ export default function Dashboard() {
                 {/* Right Side */}
                 <div className="grid grid-cols-2 grid-rows-2 gap-4">
                     <div className="rounded-lg bg-white flex items-center justify-center shadow-lg">
-                        div
+                        Right 1
                     </div>
                     <div className="rounded-lg bg-white flex items-center justify-center shadow-lg">
                         Right 2
@@ -135,6 +139,7 @@ export default function Dashboard() {
 
                 </div>
             </div>
+            <OnboardingDialog open={open} onOpenChange={setOpen} onComplete={(data) => console.log(data)}/>
         </div>
     );
 }
