@@ -21,7 +21,11 @@ function generateDates(days = 30) {
   })
 }
 
-export default function DateStrip() {
+interface DateStripProps {
+  onDateChange?: (date: Date) => void;
+}
+
+export default function DateStrip({ onDateChange }: DateStripProps) {
   const dates = generateDates(15)
   const todayId = dates.find((d) => d.isToday)?.id
   const [selected, setSelected] = useState(todayId)
@@ -34,6 +38,14 @@ export default function DateStrip() {
     )
     el?.scrollIntoView({ behavior: "smooth", inline: "center" })
   }, [selected])
+
+  // Notify parent when date changes - only call once on mount and when selection changes
+  useEffect(() => {
+    const selectedDate = dates.find((d) => d.id === selected)
+    if (selectedDate && onDateChange) {
+      onDateChange(selectedDate.fullDate)
+    }
+  }, [selected]) // Removed dates and onDateChange from dependencies to prevent infinite loop
 
   const scroll = (dir: "left" | "right") => {
     if (!containerRef.current) return

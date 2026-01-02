@@ -37,6 +37,7 @@ const onboardingSlice = createSlice({
       state.isCompleted = true;
       if (typeof window !== 'undefined') {
         localStorage.removeItem('onboardingData');
+        localStorage.setItem('onboarding_completed', 'true');
       }
     },
   },

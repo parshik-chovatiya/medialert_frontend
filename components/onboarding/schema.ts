@@ -1,10 +1,9 @@
 import { z } from "zod";
 
 export const onboardingSchema = z.object({
-  full_name: z.string().min(2),
-  age: z.number().min(1),
+  name: z.string().min(2, "Name must be at least 2 characters"),
   gender: z.enum(["male", "female", "other"]),
-  timezone: z.string(),
+  birthdate: z.string().min(1, "Birthdate is required"),
 });
 
-export type OnboardingForm = z.infer<typeof onboardingSchema>;
+export type OnboardingData = z.infer<typeof onboardingSchema>;
