@@ -91,7 +91,7 @@ export const fullSchema = z.object({
   email: z.string().optional(),
   phone_number: z.string().optional(),
   browser_permission: z.boolean().optional(),
-  start_date: z.string().min(1),
+  start_date: z.string().min(1,"start date is required"),
   quantity: z.number().min(1),
   refill_reminder: z.boolean(),
   refill_threshold: z.number().optional(),
@@ -99,7 +99,7 @@ export const fullSchema = z.object({
     z.object({
       dose_number: z.number(),
       amount: z.number().min(1),
-      time: z.string().min(1),
+      time: z.string().min(1,"time is required"),
     })
   ),
 });

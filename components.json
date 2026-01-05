@@ -8,8 +8,15 @@
     "css": "app/globals.css",
     "baseColor": "neutral",
     "cssVariables": true,
-    "prefix": ""
-  },
+    "prefix": "",
+    "theme": {
+      "extend": {
+        "transitionDuration": {
+          "400": "400ms",
+          "600": "600ms"
+        }
+      }
+    },
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@/components",

@@ -12,8 +12,8 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Image from "next/image";
 import OnboardingWizard from "./OnboardingWizard";
 import { onboardingSchema, OnboardingData } from "./schema";
-import image1 from "@/public/step1.png";
-import image2 from "@/public/step2.png";
+import image1 from "@/public/images/step1.png";
+import image2 from "@/public/images/step2.png";
 
 interface OnboardingDialogProps {
   open: boolean;
@@ -63,7 +63,7 @@ export default function OnboardingDialog({
           </div>
 
           {/* Right - Image */}
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center bg-[#efecfd] rounded-r-lg ">
             <Image
               src={images[step]}
               alt="Onboarding visual"

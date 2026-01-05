@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import DateStrip from "@/components/date-strip";
 import OnboardingDialog from "@/components/onboarding/OnboardingDialog";
+import AuthComponent from "@/components/AuthComponent";
 import Image from "next/image";
 import Link from "next/link";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -103,71 +104,6 @@ interface DoseCardProps {
     notificationMethods: string[];
 }
 
-// const DoseCard: React.FC<DoseCardProps> = ({ dose, medicineType, notificationMethods }) => {
-//     const [isHovered, setIsHovered] = useState(false);
-
-//     const getMedicineIcon = (type: string) => {
-//         switch (type.toLowerCase()) {
-//             case 'tablet':
-//                 return <TabletIcon />;
-//             case 'capsule':
-//                 return <CapsuleIcon />;
-//             case 'injection':
-//                 return <InjectionIcon />;
-//             case 'syrup':
-//                 return <SyrupIcon />;
-//             default:
-//                 return <TabletIcon />;
-//         }
-//     };
-
-//     const getNotificationIcons = (methods: string[]) => {
-//         return methods.map((method) => {
-//             switch (method.toLowerCase()) {
-//                 case 'email':
-//                     return <EmailIcon key={method} />;
-//                 case 'sms':
-//                     return <SmsIcon key={method} />;
-//                 case 'desktop':
-//                     return <DesktopIcon key={method} />;
-//                 default:
-//                     return null;
-//             }
-//         });
-//     };
-
-//     return (
-//         <div 
-//             className="flex items-center gap-4 py-2 pr-4 pl-2 border rounded-full transition-all duration-200 hover:shadow-md"
-//             onMouseEnter={() => setIsHovered(true)}
-//             onMouseLeave={() => setIsHovered(false)}
-//         >
-//             <div className="shrink-0 w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-//                 {getMedicineIcon(medicineType)}
-//             </div>
-//             <div className="flex flex-1 items-center justify-between min-w-0">
-//                 <div className="flex-1">
-//                     <p className="text-sm text-muted-foreground mb-1">{dose.instruction}</p>
-//                     <h3 className="text-base font-bold text-foreground">{dose.name}</h3>
-//                 </div>
-//                 <div className="shrink-0 ml-4">
-//                     <div className="text-sm text-muted-foreground flex items-center gap-1 transition-opacity duration-200">
-//                         {isHovered ? (
-//                             <div className="flex items-center gap-2 ">
-//                                 {getNotificationIcons(notificationMethods)}
-//                             </div>
-//                         ) : (
-//                             <>
-//                                 <ClockIcon />
-//                                 {dose.time}
-//                             </>
-//                         )}
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
 const DoseCard: React.FC<DoseCardProps> = ({ dose, medicineType, notificationMethods }) => {
     const [isHovered, setIsHovered] = useState(false);
 
@@ -247,18 +183,21 @@ const DoseCard: React.FC<DoseCardProps> = ({ dose, medicineType, notificationMet
         </div>
     );
 };
+
 interface UpcomingDosesSectionProps {
     doses: Dose[];
     loading: boolean;
     selectedDate: string;
     isAuthenticated: boolean;
+    onLoginClick: () => void;
 }
 
 const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({ 
     doses, 
     loading, 
     selectedDate,
-    isAuthenticated 
+    isAuthenticated,
+    onLoginClick
 }) => {
     // Format date to DD/MM/YYYY
     const formatDisplayDate = (dateString: string): string => {
@@ -292,11 +231,9 @@ const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({
             {!isAuthenticated && (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-4 rounded-lg">
                     <p className="text-lg text-gray-700 font-medium">Please login to view your doses</p>
-                    <Link href="/login">
-                        <Button size="lg" className="px-8">
-                            Login
-                        </Button>
-                    </Link>
+                    <Button size="lg" className="px-8" onClick={onLoginClick}>
+                        Login
+                    </Button>
                 </div>
             )}
 
@@ -349,6 +286,7 @@ export default function Dashboard() {
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
     
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [doses, setDoses] = useState<Dose[]>([]);
     const [loading, setLoading] = useState(false);
@@ -490,6 +428,14 @@ export default function Dashboard() {
         setShowOnboarding(false);
     };
 
+    const handleLoginClick = () => {
+        setShowAuthModal(true);
+    };
+
+    const handleAuthClose = () => {
+        setShowAuthModal(false);
+    };
+
     return (
         <div className="h-[calc(100vh-10rem)]">
             <main className="pb-4">
@@ -502,6 +448,7 @@ export default function Dashboard() {
                     loading={loading} 
                     selectedDate={selectedDate}
                     isAuthenticated={isAuthenticated}
+                    onLoginClick={handleLoginClick}
                 />
 
                 {/* Right Side */}
@@ -565,6 +512,12 @@ export default function Dashboard() {
                 open={showOnboarding} 
                 onOpenChange={setShowOnboarding} 
                 onComplete={handleOnboardingComplete}
+            />
+
+            {/* Auth Modal */}
+            <AuthComponent 
+                isOpen={showAuthModal}
+                onClose={handleAuthClose}
             />
         </div>
     );

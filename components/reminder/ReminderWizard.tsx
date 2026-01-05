@@ -26,6 +26,7 @@ import { Step2DosesNotifications } from "./steps/Step2DosesNotifications";
 import { Step3Timing } from "./steps/Step3Timing";
 import { Step4Quantity } from "./steps/Step4Quantity";
 import { Step5Review } from "./steps/Step5Review";
+import AuthComponent from "@/components/AuthComponent";
 
 import { useAppSelector } from "@/store/hooks";
 import { useRouter } from "next/navigation";
@@ -48,6 +49,7 @@ export default function ReminderWizard({
   onSubmit: onSubmitProp,
 }: ReminderWizardProps) {
   const [step, setStep] = useState(1);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const isAuthenticated = useAppSelector(
     (state) => state.auth.isAuthenticated
@@ -55,7 +57,11 @@ export default function ReminderWizard({
   const router = useRouter();
 
   const handleLoginClick = () => {
-    router.push("/login");
+    setShowAuthModal(true);
+  };
+
+  const handleAuthClose = () => {
+    setShowAuthModal(false);
   };
 
   const form = useForm<MedicineFormData>({
@@ -321,10 +327,10 @@ export default function ReminderWizard({
 
       {/* Auth Overlay */}
       {!isAuthenticated && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center  rounded-2xl">
-          <div className="absolute inset-0 " />
-          <div className="relative z-40 flex flex-col items-center gap-3 rounded-xl  px-6 py-5 ">
-            <Lock className="h-14 w-14 text-primary  " />
+        <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl">
+          <div className="absolute inset-0" />
+          <div className="relative z-40 flex flex-col items-center gap-3 rounded-xl px-6 py-5">
+            <Lock className="h-14 w-14 text-primary" />
             <p className="text-3xl font-medium text-foreground font-semibold">
               You are not logged in
             </p>
@@ -338,6 +344,12 @@ export default function ReminderWizard({
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthComponent 
+        isOpen={showAuthModal}
+        onClose={handleAuthClose}
+      />
     </div>
   );
 }
