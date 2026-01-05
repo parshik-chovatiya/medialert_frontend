@@ -52,7 +52,7 @@ export default function OnboardingWizard({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[400px]">
       {/* Progress Bar */}
       <div className="flex gap-2 mb-8">
         {[0, 1].map((i) => (
@@ -71,7 +71,7 @@ export default function OnboardingWizard({
       </h1>
 
       {/* Step Content */}
-      <div className="flex-1">
+      <div className="flex-1 ">
         {step === 0 && <NameStep form={form} />}
         {step === 1 && <DetailsStep form={form} />}
       </div>

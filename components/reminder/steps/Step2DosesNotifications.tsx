@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
+import { useAppSelector } from "@/store/hooks";
 import {
   FormControl,
   FormDescription,
@@ -41,9 +43,20 @@ interface Step2Props {
 }
 
 export function Step2DosesNotifications({ form }: Step2Props) {
+  // Get user data from Redux store
+  const user = useAppSelector((state) => state.auth.user);
+  const userEmail = user?.email || "";
+
   const notificationMethods = form.watch("notification_methods") || [];
   const countryCode = form.watch("country_code") || "+91";
   const mobileNumber = form.watch("mobile_number") || "";
+
+  // Set email from store when component mounts or user changes
+  useEffect(() => {
+    if (userEmail) {
+      form.setValue("email", userEmail);
+    }
+  }, [userEmail, form]);
 
   const toggleNotification = (value: string) => {
     const current = form.getValues("notification_methods") || [];
@@ -155,10 +168,14 @@ export function Step2DosesNotifications({ form }: Step2Props) {
                     <Input
                       type="email"
                       {...field}
+                      value={field.value || userEmail}
                       disabled
                       className="bg-muted cursor-not-allowed h-9"
                     />
                   </FormControl>
+                  <FormDescription className="text-xs text-muted-foreground">
+                    Reminders will be sent to this email address.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -287,4 +304,4 @@ export function Step2DosesNotifications({ form }: Step2Props) {
       )}
     </div>
   );
-}
+} 

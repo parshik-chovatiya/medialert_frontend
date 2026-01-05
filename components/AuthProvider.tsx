@@ -3,13 +3,12 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setUser, clearUser } from "@/store/slices/authSlice";
+import { markOnboardingComplete } from "@/store/slices/onboardingSlice";
 import { authApi } from "@/lib/api/authApi";
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const dispatch = useAppDispatch();
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-
-
 
     const restoreSession = async () => {
         try {
@@ -22,7 +21,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
             // Mark onboarding as completed if user is onboarded
             if (user.is_onboarded) {
-                localStorage.setItem('onboarding_completed', 'true');
+                dispatch(markOnboardingComplete());
             }
         } catch (error) {
             // No valid session, clear any stale data
@@ -30,11 +29,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             console.log("No active session");
         }
     };
+
     useEffect(() => {
         // Only fetch user if not already authenticated in Redux
         if (!isAuthenticated) {
             restoreSession();
         }
     }, []);
+
     return <>{children}</>;
 }

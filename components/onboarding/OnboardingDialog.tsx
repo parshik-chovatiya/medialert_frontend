@@ -63,7 +63,7 @@ export default function OnboardingDialog({
           </div>
 
           {/* Right - Image */}
-          <div className="flex items-center justify-center bg-primary/5">
+          <div className="flex items-center justify-center">
             <Image
               src={images[step]}
               alt="Onboarding visual"

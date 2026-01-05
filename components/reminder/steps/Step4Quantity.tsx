@@ -33,8 +33,18 @@ export function Step4Quantity({ form }: Step4Props) {
               <Input
                 type="number"
                 placeholder="Enter total quantity"
-                {...field}
-                onChange={(e) => field.onChange(Number(e.target.value))}
+                value={field.value || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // If empty, set to undefined
+                  if (value === "" || value === null) {
+                    field.onChange(undefined);
+                  } else {
+                    // Convert to number and ensure no leading zeros
+                    const numValue = Number(value);
+                    field.onChange(numValue);
+                  }
+                }}
                 className="h-9"
                 min="1"
               />
@@ -82,11 +92,17 @@ export function Step4Quantity({ form }: Step4Props) {
                   <Input
                     type="number"
                     placeholder="Enter threshold quantity"
-                    {...field}
                     value={field.value || ""}
                     onChange={(e) => {
-                      const value = e.target.value ? Number(e.target.value) : undefined;
-                      field.onChange(value);
+                      const value = e.target.value;
+                      // If empty, set to undefined
+                      if (value === "" || value === null) {
+                        field.onChange(undefined);
+                      } else {
+                        // Convert to number and ensure no leading zeros
+                        const numValue = Number(value);
+                        field.onChange(numValue);
+                      }
                     }}
                     className="h-9"
                     min="1"

@@ -22,23 +22,16 @@ const onboardingSlice = createSlice({
   reducers: {
     setOnboardingData: (state, action: PayloadAction<OnboardingData>) => {
       state.data = action.payload;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('onboardingData', JSON.stringify(action.payload));
-      }
+      // No need for manual localStorage - Redux Persist handles it
     },
     clearOnboardingData: (state) => {
       state.data = null;
       state.isCompleted = false;
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('onboardingData');
-      }
+      // No need for manual localStorage - Redux Persist handles it
     },
     markOnboardingComplete: (state) => {
       state.isCompleted = true;
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('onboardingData');
-        localStorage.setItem('onboarding_completed', 'true');
-      }
+      // No need for manual localStorage - Redux Persist handles it
     },
   },
 });

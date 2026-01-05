@@ -2,8 +2,22 @@ import Image from 'next/image'
 import logo from '../public/logo.png'
 import { Bell, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { useAppSelector } from "@/store/hooks"
 
 export function Header() {
+    // Get user data from Redux store
+    const user = useAppSelector((state) => state.auth.user);
+    const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
+    // Determine display name
+    const displayName = isAuthenticated && user ? user.name : 'Guest';
+    const greeting = isAuthenticated && user 
+        ? `Hello, ${displayName}!` 
+        : 'Hello, Guest!';
+    const subtext = isAuthenticated && user
+        ? 'Manage your reminders'
+        : 'Explore your reminders';
+
     return (
         <header className="fixed top-0 left-0 right-0 h-20 flex items-center z-50">
             <div className='max-w-7xl mx-auto w-full flex items-center justify-between pl-3 pr-3'>
@@ -16,8 +30,8 @@ export function Header() {
                         </div>
                     </div>
                     <div>
-                        <p className="text-lg font-semibold">Hello, Guest!</p>
-                        <p className="text-sm opacity-70">Explore your reminders</p>
+                        <p className="text-lg font-semibold">{greeting}</p>
+                        <p className="text-sm opacity-70">{subtext}</p>
                     </div>
                 </div>
 
