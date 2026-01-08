@@ -19,8 +19,8 @@ export function Sidebar() {
   const top = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
     { icon: PillBottle, label:'Add Medicine Reminder', href: '/reminder' },
+    { icon: ClipboardList, label: 'Medicine Reminder List', href: '/allreminder' },
     { icon: TrendingUp, label: 'Progress', href: '/progress' },
-    { icon: ClipboardList, label: 'Medicine Reminder List', href: '/medicine-list' },
   ]
 
   const bottom = [

@@ -9,11 +9,15 @@ export function Header() {
     const user = useAppSelector((state) => state.auth.user);
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
+    // Get onboarding data from Redux store
+    const onboardingData = useAppSelector((state) => state.onboarding.data);
+
     // Determine display name
-    const displayName = isAuthenticated && user ? user.name : 'Guest';
-    const greeting = isAuthenticated && user 
-        ? `Hello, ${displayName}!` 
-        : 'Hello, Guest!';
+    const displayName = isAuthenticated && user
+        ? user.name
+        : onboardingData?.name || 'Guest';
+
+    const greeting = `Hello, ${displayName}!`;
     const subtext = isAuthenticated && user
         ? 'Manage your reminders'
         : 'Explore your reminders';
@@ -23,7 +27,6 @@ export function Header() {
             <div className='max-w-7xl mx-auto w-full flex items-center justify-between pl-3 pr-3'>
                 {/* LEFT */}
                 <div className="flex items-center gap-0">
-                    {/* Logo - width matches sidebar with margin */}
                     <div className="w-23 flex justify-center">
                         <div className="w-11 h-11">
                             <Image src={logo} alt="Logo" className="object-contain" />
@@ -38,7 +41,7 @@ export function Header() {
                 {/* RIGHT */}
                 <div className="flex items-center gap-3 ">
                     <HeaderIcon>
-                        <Link href='/reminder'><Plus className="w-5 h-5"/></Link>
+                        <Link href='/reminder'><Plus className="w-5 h-5" /></Link>
                     </HeaderIcon>
 
                     <HeaderIcon>

@@ -413,18 +413,16 @@ export default function Dashboard() {
     }, [selectedDate, fetchDoses, isAuthenticated]);
 
     useEffect(() => {
-        const isOnboardingCompleted = localStorage.getItem('onboarding_completed');
-        
-        if (!isOnboardingCompleted) {
-            const hasOnboardingData = localStorage.getItem('onboardingData');
-            if (!hasOnboardingData) {
-                setShowOnboarding(true);
-            }
-        }
-    }, [isAuthenticated, user]);
+    const isOnboardingCompleted = localStorage.getItem('guest_onboarding_completed');
+    
+    if (!isOnboardingCompleted) {
+        setShowOnboarding(true);
+    }
+}, [isAuthenticated, user]);
 
     const handleOnboardingComplete = (data: OnboardingData) => {
         dispatch(setOnboardingData(data));
+        localStorage.setItem('guest_onboarding_completed', 'true');
         setShowOnboarding(false);
     };
 

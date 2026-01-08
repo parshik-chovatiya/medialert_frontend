@@ -9,6 +9,7 @@ interface OnboardingData {
 interface OnboardingState {
   data: OnboardingData | null;
   isCompleted: boolean;
+  isGuestOnboarded?: boolean;
 }
 
 const initialState: OnboardingState = {
@@ -27,6 +28,7 @@ const onboardingSlice = createSlice({
     clearOnboardingData: (state) => {
       state.data = null;
       state.isCompleted = false;
+      state.isGuestOnboarded = false;
       // No need for manual localStorage - Redux Persist handles it
     },
     markOnboardingComplete: (state) => {
@@ -37,4 +39,4 @@ const onboardingSlice = createSlice({
 });
 
 export const { setOnboardingData, clearOnboardingData, markOnboardingComplete } = onboardingSlice.actions;
-export default onboardingSlice.reducer;
+export default onboardingSlice.reducer; 
