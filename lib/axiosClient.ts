@@ -28,7 +28,7 @@ axiosClient.interceptors.response.use(
         );
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        window.location.href = '/login';
+        window.location.href = '/';
         return Promise.reject(refreshError);
       }
     }

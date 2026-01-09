@@ -13,7 +13,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
 
   const handleLoginClick = () => {
-    router.push("/login");
+    router.push("/");
   };
 
   return (
@@ -27,7 +27,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       {!isAuthenticated && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center border border-gray-200">
-            <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <div className="w-20 h-20 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
               <Lock className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
@@ -38,7 +38,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
             </p>
             <button
               onClick={handleLoginClick}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+              className="w-full bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
             >
               Login Now
             </button>

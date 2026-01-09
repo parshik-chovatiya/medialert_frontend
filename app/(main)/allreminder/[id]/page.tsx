@@ -62,7 +62,7 @@ export default function ReminderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  const userEmail = useSelector((state: any) => state.auth.user?.email);
+  const userEmail = useSelector((state: any) => state.auth.user?.phone_number);
 
   const [reminder, setReminder] = useState<ReminderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,7 +115,7 @@ export default function ReminderDetailPage() {
       const response = await reminderApi.getReminder(parseInt(id));
       const data = response.data.data.reminder;
       setReminder(data);
-      
+
       // Initialize edit data
       setEditData({
         medicine_name: data.medicine_name,
@@ -132,8 +132,9 @@ export default function ReminderDetailPage() {
           time: s.time,
         })),
       });
-    } catch (error) {
-      toast.error("Failed to fetch reminder details");
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || "Failed to fetch reminder details";
+      toast.error(errorMsg);
       console.error(error);
       router.push("/allreminder");
     } finally {
@@ -232,7 +233,8 @@ export default function ReminderDetailPage() {
       setIsEditing(false);
       fetchReminderDetail();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update reminder");
+      const errorMsg = error?.response?.data?.message || "Failed to update reminder";
+      toast.error(errorMsg);
       console.error(error);
     } finally {
       setActionLoading(false);
@@ -252,8 +254,9 @@ export default function ReminderDetailPage() {
         toast.success("Reminder activated");
       }
       fetchReminderDetail();
-    } catch (error) {
-      toast.error("Failed to update reminder");
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || "Failed to update reminder";
+      toast.error(errorMsg);
       console.error(error);
     } finally {
       setActionLoading(false);
@@ -269,8 +272,9 @@ export default function ReminderDetailPage() {
       await reminderApi.deleteReminder(reminder.id);
       toast.success("Reminder deleted successfully");
       router.push("/allreminder");
-    } catch (error) {
-      toast.error("Failed to delete reminder");
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || "Failed to delete reminder";
+      toast.error(errorMsg);
       console.error(error);
       setActionLoading(false);
     }
@@ -317,7 +321,6 @@ export default function ReminderDetailPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -352,7 +355,7 @@ export default function ReminderDetailPage() {
     parseFloat(reminder.quantity) <= parseFloat(reminder.refill_threshold);
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <div className="container mx-auto p-6 max-w-7xl h-145 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -377,7 +380,7 @@ export default function ReminderDetailPage() {
                     onChange={(e) =>
                       setEditData({ ...editData, medicine_name: e.target.value })
                     }
-                    className="text-3xl font-bold h-12 mb-2"
+                    className="text-3xl font-bold h-12 mb-2 bg-white"
                     placeholder="Medicine name"
                   />
                 ) : (
@@ -400,7 +403,6 @@ export default function ReminderDetailPage() {
                       <SelectItem value="capsule">Capsule</SelectItem>
                       <SelectItem value="syrup">Syrup</SelectItem>
                       <SelectItem value="injection">Injection</SelectItem>
-                      <SelectItem value="drops">Drops</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -491,18 +493,6 @@ export default function ReminderDetailPage() {
                   {isEditing ? editData.dose_schedules.length : reminder.dose_count_daily} times per day
                 </p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Created</p>
-                <p className="text-sm font-medium">
-                  {formatDateTime(reminder.created_at)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Last Updated</p>
-                <p className="text-sm font-medium">
-                  {formatDateTime(reminder.updated_at)}
-                </p>
-              </div>
             </CardContent>
           </Card>
 
@@ -531,8 +521,8 @@ export default function ReminderDetailPage() {
                       className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg"
                     >
                       <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full flex-shrink-0">
-                        <span className="text-sm font-bold text-blue-600">
-                          #{index + 1}
+                        <span className="text-lg font-bold text-blue-600">
+                          {index + 1}
                         </span>
                       </div>
                       <div className="flex-1 grid grid-cols-2 gap-3">
@@ -566,7 +556,7 @@ export default function ReminderDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeDoseSchedule(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-300 rounded-full p-2"
                         >
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -577,12 +567,12 @@ export default function ReminderDetailPage() {
                   reminder.dose_schedules.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between pl-2 pr-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                          <span className="text-sm font-bold text-blue-600">
-                            #{schedule.dose_number}
+                        <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full">
+                          <span className="text-2xl font-bold text-blue-600">
+                            {schedule.dose_number}
                           </span>
                         </div>
                         <div>
@@ -638,11 +628,10 @@ export default function ReminderDetailPage() {
               )}
 
               {reminder.notification_methods.includes("push_notification") && (
-                <div className={`p-3 border rounded-lg ${
-                  pushPermission === "granted"
-                    ? "bg-green-50 border-green-200"
-                    : "bg-yellow-50 border-yellow-200"
-                }`}>
+                <div className={`p-3 border rounded-lg ${pushPermission === "granted"
+                  ? "bg-green-50 border-green-200"
+                  : "bg-yellow-50 border-yellow-200"
+                  }`}>
                   <p className="text-sm font-semibold mb-2">
                     Push Notifications:{" "}
                     {pushPermission === "granted" ? "Enabled" : "Disabled"}
@@ -678,7 +667,6 @@ export default function ReminderDetailPage() {
                   <Label>Current Quantity</Label>
                   <Input
                     type="number"
-                    step="0.5"
                     min="0"
                     value={editData.quantity}
                     onChange={(e) =>
@@ -692,15 +680,13 @@ export default function ReminderDetailPage() {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Current Stock</span>
                     <span className="text-sm font-semibold">
-                      {parseFloat(reminder.quantity)} /{" "}
-                      {parseFloat(reminder.initial_quantity)}
+                      {parseFloat(reminder.quantity)} 
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                      className={`h-3 rounded-full transition-all ${
-                        isLowStock ? "bg-red-500" : "bg-green-500"
-                      }`}
+                      className={`h-3 rounded-full transition-all ${isLowStock ? "bg-red-500" : "bg-green-500"
+                        }`}
                       style={{ width: `${Math.min(quantityPercentage, 100)}%` }}
                     />
                   </div>

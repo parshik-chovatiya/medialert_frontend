@@ -366,7 +366,8 @@ export default function Dashboard() {
                 params: { date: dateString }
             });
             
-            const data: DashboardResponse = response.data;
+            // ✅ Fix: Access data from response.data.data
+            const data: DashboardResponse = response.data.data;
             const transformedDoses = transformApiResponse(data);
             setDoses(transformedDoses);
         } catch (error) {
@@ -412,13 +413,17 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, [selectedDate, fetchDoses, isAuthenticated]);
 
+    // ✅ Fix: Onboarding popup logic
     useEffect(() => {
-    const isOnboardingCompleted = localStorage.getItem('guest_onboarding_completed');
-    
-    if (!isOnboardingCompleted) {
-        setShowOnboarding(true);
-    }
-}, [isAuthenticated, user]);
+        // Only check for guest onboarding if not authenticated
+        if (!isAuthenticated) {
+            const isGuestOnboardingCompleted = localStorage.getItem('guest_onboarding_completed');
+            
+            if (!isGuestOnboardingCompleted) {
+                setShowOnboarding(true);
+            }
+        }
+    }, [isAuthenticated]);
 
     const handleOnboardingComplete = (data: OnboardingData) => {
         dispatch(setOnboardingData(data));

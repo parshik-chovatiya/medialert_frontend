@@ -82,19 +82,25 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
         password: loginPassword,
       });
 
-      const { user } = res.data;
+      const { user } = res.data.data;
       dispatch(setUser(user));
+      
       dispatch(clearOnboardingData());
+      localStorage.removeItem('guest_onboarding_completed');
       localStorage.setItem('onboarding_completed', 'true');
 
       toast.success("Login successful");
+      
+      // ✅ Only close and navigate on SUCCESS
       onClose();
       router.push("/");
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.error 
+      // ✅ Stay on popup, only show error
+      const errorMsg = err?.response?.data?.message 
         || err?.response?.data?.detail 
         || "Login failed";
       toast.error(errorMsg);
+      // Don't close popup on error
     } finally {
       setLoading(false);
     }
@@ -116,7 +122,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
     const onboardingData = getOnboardingData();
 
     if (!onboardingData) {
-      toast.error("Please complete the onboarding form first");
+      toast.error("Please complete the onboarding first");
       onClose();
       router.push("/");
       return;
@@ -132,48 +138,49 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
 
-      const { user } = registerRes.data;
+      const { user } = registerRes.data.data;
       toast.success("Registration successful!");
 
       try {
-        await authApi.completeOnboarding(onboardingData);
-        
-        const updatedUser = {
-          ...user,
-          name: onboardingData.name,
-          gender: onboardingData.gender,
-          birthdate: onboardingData.birthdate,
-          is_onboarded: true,
-        };
+        const onboardingRes = await authApi.completeOnboarding(onboardingData);
+        const updatedUser = onboardingRes.data.data.user;
 
         dispatch(setUser(updatedUser));
         dispatch(markOnboardingComplete());
         dispatch(clearOnboardingData());
+        
+        localStorage.removeItem('guest_onboarding_completed');
         localStorage.setItem('onboarding_completed', 'true');
 
         toast.success("Onboarding completed successfully!");
+        
+        // ✅ Only close and navigate on SUCCESS
         onClose();
         router.push("/");
       } catch (onboardingErr: any) {
         dispatch(setUser(user));
         
         const onboardingErrorMsg = 
-          onboardingErr?.response?.data?.error ||
+          onboardingErr?.response?.data?.message ||
           onboardingErr?.response?.data?.detail ||
           "Onboarding failed. Please update your profile later.";
         
         toast.error(onboardingErrorMsg);
+        
+        // ✅ Close even if onboarding fails (user is registered)
         onClose();
         router.push("/");
       }
     } catch (err: any) {
+      // ✅ Stay on popup, only show error
       const errorMsg =
-        err?.response?.data?.error ||
+        err?.response?.data?.message ||
         err?.response?.data?.email?.[0] ||
         err?.response?.data?.password?.[0] ||
         err?.response?.data?.detail ||
         "Registration failed";
       toast.error(errorMsg);
+      // Don't close popup on error
     } finally {
       setLoading(false);
     }
@@ -184,10 +191,8 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
       className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn"
       onClick={onClose}
     >
-      {/* Full screen blur background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#512da8]/20 via-purple-500/10 to-[#5c6bc0]/20 backdrop-blur-md" />
 
-      {/* Close button */}
       <button
         onClick={onClose}
         className="absolute top-6 right-6 z-20 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg transition-all duration-300 hover:scale-110"
@@ -196,7 +201,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
         <X className="w-6 h-6 text-gray-700" />
       </button>
 
-      {/* Main content container with inset effect */}
       <div 
         className="relative z-10 w-[90vw] max-w-6xl h-[85vh] max-h-[800px] animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
@@ -209,7 +213,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
             boxShadow: '0 25px 50px -12px rgba(81, 45, 168, 0.25), inset 0 2px 4px 0 rgba(255, 255, 255, 0.1)'
           }}
         >
-          {/* Form Section */}
           <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto">
             {!isRegisterMode && (
               <div className="w-full max-w-md space-y-6 animate-fadeIn">
@@ -244,7 +247,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
                         placeholder="••••••••"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-   primary/50 focus:border-transparent transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
@@ -366,7 +369,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Image Section */}
           <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gradient-to-br from-[#5c6bc0]/10 to-[#512da8]/5 p-12 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-100/50 to-indigo-100/50" />
             <div className={`relative w-full max-w-md transition-all duration-500 ${isRegisterMode ? 'animate-slideIn' : 'animate-slideIn'}`}>
@@ -396,47 +398,20 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
 
       <style jsx>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-
         @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
         }
-
         @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
         }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .animate-scaleIn {
-          animation: scaleIn 0.4s ease-out;
-        }
-
-        .animate-slideIn {
-          animation: slideIn 0.5s ease-out;
-        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-scaleIn { animation: scaleIn 0.4s ease-out; }
+        .animate-slideIn { animation: slideIn 0.5s ease-out; }
       `}</style>
     </div>
   );

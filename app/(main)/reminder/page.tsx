@@ -6,11 +6,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-
-
 export default function ReminderPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (formData: any) => {
     setLoading(true)
@@ -33,7 +31,7 @@ export default function ReminderPage() {
 
       const response = await reminderApi.createReminder(apiData)
 
-      toast.success("medicine reminder created successfully")
+      toast.success("Medicine reminder created successfully")
 
       setTimeout(() => {
         router.push("/")
@@ -41,7 +39,9 @@ export default function ReminderPage() {
     } catch (error: any) {
       console.error("Failed to create reminder", error)
 
-      const errorMsg = error?.response?.data?.medicine_name?.[0] ||
+      // ✅ Fix: Access error message from response.data.message
+      const errorMsg = error?.response?.data?.message ||
+        error?.response?.data?.medicine_name?.[0] ||
         error?.response?.data?.dose_schedules?.[0] ||
         error?.response?.data?.notification_methods?.[0] ||
         error?.response?.data?.detail ||
@@ -55,7 +55,6 @@ export default function ReminderPage() {
 
   return (
     <div className="py-8">
-      
       <ReminderWizard onSubmit={handleSubmit} />
     </div>
   );
