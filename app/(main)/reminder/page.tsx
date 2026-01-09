@@ -39,7 +39,6 @@ export default function ReminderPage() {
     } catch (error: any) {
       console.error("Failed to create reminder", error)
 
-      // ✅ Fix: Access error message from response.data.message
       const errorMsg = error?.response?.data?.message ||
         error?.response?.data?.medicine_name?.[0] ||
         error?.response?.data?.dose_schedules?.[0] ||

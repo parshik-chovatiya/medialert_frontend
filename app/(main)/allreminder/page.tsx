@@ -45,7 +45,6 @@ interface Reminder {
 export default function AllRemindersPage() {
     const router = useRouter();
     
-    // ✅ Get auth state from Redux
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
     
     const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -56,7 +55,6 @@ export default function AllRemindersPage() {
     const [reminderToDelete, setReminderToDelete] = useState<number | null>(null);
 
     useEffect(() => {
-        // ✅ Only fetch if authenticated
         if (isAuthenticated) {
             fetchReminders();
         }
@@ -139,7 +137,6 @@ export default function AllRemindersPage() {
         });
     };
 
-    // ✅ Show loading only if authenticated
     if (loading && isAuthenticated) {
         return (
             <div className="container mx-auto p-6 max-w-7xl overflow-x-hidden overflow-y-hidden h-145 [&::-webkit-scrollbar]:pt-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
@@ -204,7 +201,6 @@ export default function AllRemindersPage() {
                 </h1>
             </div>
 
-            {/* ✅ Show "No reminders" for both auth and non-auth users */}
             {(!isAuthenticated || reminders.length === 0) ? (
                 <Card className="text-center py-12">
                     <CardContent>

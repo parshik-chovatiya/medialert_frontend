@@ -91,11 +91,9 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
 
       toast.success("Login successful");
       
-      // ✅ Only close and navigate on SUCCESS
       onClose();
       router.push("/");
     } catch (err: any) {
-      // ✅ Stay on popup, only show error
       const errorMsg = err?.response?.data?.message 
         || err?.response?.data?.detail 
         || "Login failed";
@@ -154,7 +152,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
 
         toast.success("Onboarding completed successfully!");
         
-        // ✅ Only close and navigate on SUCCESS
         onClose();
         router.push("/");
       } catch (onboardingErr: any) {
@@ -167,12 +164,10 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
         
         toast.error(onboardingErrorMsg);
         
-        // ✅ Close even if onboarding fails (user is registered)
         onClose();
         router.push("/");
       }
     } catch (err: any) {
-      // ✅ Stay on popup, only show error
       const errorMsg =
         err?.response?.data?.message ||
         err?.response?.data?.email?.[0] ||

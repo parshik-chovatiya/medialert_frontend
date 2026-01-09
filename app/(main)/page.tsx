@@ -366,7 +366,6 @@ export default function Dashboard() {
                 params: { date: dateString }
             });
             
-            // ✅ Fix: Access data from response.data.data
             const data: DashboardResponse = response.data.data;
             const transformedDoses = transformApiResponse(data);
             setDoses(transformedDoses);
@@ -413,7 +412,6 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, [selectedDate, fetchDoses, isAuthenticated]);
 
-    // ✅ Fix: Onboarding popup logic
     useEffect(() => {
         // Only check for guest onboarding if not authenticated
         if (!isAuthenticated) {
