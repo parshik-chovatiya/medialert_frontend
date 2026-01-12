@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "@/store/hooks";
 import { reminderApi } from "@/lib/api/reminderApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Pill,
@@ -31,6 +41,9 @@ import {
   X,
   Plus,
   Trash,
+  Thermometer,
+  Syringe,
+  Droplet,
 } from "lucide-react";
 
 interface DoseSchedule {
@@ -62,12 +75,18 @@ export default function ReminderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  const userEmail = useSelector((state: any) => state.auth.user?.phone_number);
+  
+  // ✅ Fetch user data from Redux
+  const user = useAppSelector((state) => state.auth.user);
+  const userEmail = user?.email || "";
+  const userPhone = user?.phone_number || "";
 
   const [reminder, setReminder] = useState<ReminderDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Edit state
   const [editData, setEditData] = useState({
@@ -77,7 +96,9 @@ export default function ReminderDetailPage() {
     refill_reminder: false,
     refill_threshold: "",
     notification_methods: [] as string[],
-    phone_code: "+91",
+    email: "",
+    country_code: "+91",
+    mobile_number: "",
     phone_number: "",
     dose_schedules: [] as DoseSchedule[],
   });
@@ -109,6 +130,22 @@ export default function ReminderDetailPage() {
     }
   };
 
+  // ✅ Get medicine icon based on type
+  const getMedicineIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'tablet':
+        return Pill;
+      case 'capsule':
+        return Thermometer;
+      case 'injection':
+        return Syringe;
+      case 'syrup':
+        return Droplet;
+      default:
+        return Pill;
+    }
+  };
+
   const fetchReminderDetail = async () => {
     try {
       setLoading(true);
@@ -116,19 +153,35 @@ export default function ReminderDetailPage() {
       const data = response.data.data.reminder;
       setReminder(data);
 
+      // ✅ Parse phone number
+      let countryCode = "+91";
+      let mobileNumber = "";
+      
+      if (userPhone) {
+        const phoneMatch = userPhone.match(/^(\+\d{1,3})(.+)$/);
+        if (phoneMatch) {
+          countryCode = phoneMatch[1];
+          mobileNumber = phoneMatch[2];
+        } else {
+          mobileNumber = userPhone;
+        }
+      }
+
       // Initialize edit data
       setEditData({
         medicine_name: data.medicine_name,
         medicine_type: data.medicine_type,
-        quantity: data.quantity,
+        quantity: parseInt(data.quantity).toString(),
         refill_reminder: data.refill_reminder,
-        refill_threshold: data.refill_threshold,
+        refill_threshold: data.refill_threshold ? parseInt(data.refill_threshold).toString() : "",
         notification_methods: data.notification_methods,
-        phone_code: "+91",
-        phone_number: "",
+        email: userEmail,
+        country_code: countryCode,
+        mobile_number: mobileNumber,
+        phone_number: userPhone,
         dose_schedules: data.dose_schedules.map((s: DoseSchedule) => ({
           dose_number: s.dose_number,
-          amount: s.amount,
+          amount: parseInt(s.amount).toString(),
           time: s.time,
         })),
       });
@@ -148,18 +201,33 @@ export default function ReminderDetailPage() {
 
   const handleCancel = () => {
     if (reminder) {
+      let countryCode = "+91";
+      let mobileNumber = "";
+      
+      if (userPhone) {
+        const phoneMatch = userPhone.match(/^(\+\d{1,3})(.+)$/);
+        if (phoneMatch) {
+          countryCode = phoneMatch[1];
+          mobileNumber = phoneMatch[2];
+        } else {
+          mobileNumber = userPhone;
+        }
+      }
+
       setEditData({
         medicine_name: reminder.medicine_name,
         medicine_type: reminder.medicine_type,
-        quantity: reminder.quantity,
+        quantity: parseInt(reminder.quantity).toString(),
         refill_reminder: reminder.refill_reminder,
-        refill_threshold: reminder.refill_threshold,
+        refill_threshold: reminder.refill_threshold ? parseInt(reminder.refill_threshold).toString() : "",
         notification_methods: reminder.notification_methods,
-        phone_code: "+91",
-        phone_number: "",
+        email: userEmail,
+        country_code: countryCode,
+        mobile_number: mobileNumber,
+        phone_number: userPhone,
         dose_schedules: reminder.dose_schedules.map((s) => ({
           dose_number: s.dose_number,
-          amount: s.amount,
+          amount: parseInt(s.amount).toString(),
           time: s.time,
         })),
       });
@@ -174,14 +242,22 @@ export default function ReminderDetailPage() {
       return;
     }
 
-    if (parseFloat(editData.quantity) <= 0) {
-      toast.error("Quantity must be greater than 0");
+    const quantity = parseInt(editData.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+      toast.error("Quantity must be a positive number");
       return;
     }
 
-    if (editData.refill_reminder && parseFloat(editData.refill_threshold) > parseFloat(editData.quantity)) {
-      toast.error("Refill threshold cannot be more than current quantity");
-      return;
+    if (editData.refill_reminder) {
+      const threshold = parseInt(editData.refill_threshold);
+      if (isNaN(threshold) || threshold <= 0) {
+        toast.error("Refill threshold must be a positive number");
+        return;
+      }
+      if (threshold >= quantity) {
+        toast.error("Refill threshold must be less than current quantity");
+        return;
+      }
     }
 
     if (editData.dose_schedules.length === 0) {
@@ -189,18 +265,24 @@ export default function ReminderDetailPage() {
       return;
     }
 
+    if (editData.dose_schedules.length > 10) {
+      toast.error("Maximum 10 doses allowed");
+      return;
+    }
+
     // Check for duplicate times
     const times = editData.dose_schedules.map(s => s.time);
     const uniqueTimes = new Set(times);
     if (times.length !== uniqueTimes.size) {
-      toast.error("Dose times must be unique");
+      toast.error("All dose times must be unique");
       return;
     }
 
     // Check for empty amounts or times
     for (const schedule of editData.dose_schedules) {
-      if (!schedule.amount || parseFloat(schedule.amount) <= 0) {
-        toast.error("All dose amounts must be greater than 0");
+      const amount = parseInt(schedule.amount);
+      if (isNaN(amount) || amount <= 0) {
+        toast.error("All dose amounts must be positive numbers");
         return;
       }
       if (!schedule.time) {
@@ -209,23 +291,49 @@ export default function ReminderDetailPage() {
       }
     }
 
+    // ✅ Validate notification methods
+    const updatedMethods = [...editData.notification_methods];
+    
+    // Check SMS
+    if (updatedMethods.includes("sms")) {
+      if (!editData.mobile_number || editData.mobile_number.length < 10) {
+        toast.error("Valid phone number required for SMS notifications");
+        return;
+      }
+    }
+
+    // Check Push
+    if (updatedMethods.includes("push_notification")) {
+      if (pushPermission !== "granted") {
+        toast.error("Browser permission required for push notifications");
+        return;
+      }
+    }
+
     try {
-      setActionLoading(true);
+      setToggleLoading(true);
+
+      // ✅ Build phone_number for API
+      let apiPhoneNumber = undefined;
+      if (updatedMethods.includes("sms")) {
+        apiPhoneNumber = `${editData.country_code}${editData.mobile_number}`;
+      }
 
       const updatePayload = {
         medicine_name: editData.medicine_name,
         medicine_type: editData.medicine_type,
         dose_count_daily: editData.dose_schedules.length,
-        notification_methods: reminder?.notification_methods || [],
+        notification_methods: updatedMethods,
         start_date: reminder?.start_date || new Date().toISOString().split('T')[0],
-        quantity: parseFloat(editData.quantity),
+        quantity: quantity,
         refill_reminder: editData.refill_reminder,
-        refill_threshold: parseFloat(editData.refill_threshold),
+        refill_threshold: editData.refill_reminder ? parseInt(editData.refill_threshold) : undefined,
         dose_schedules: editData.dose_schedules.map((s, idx) => ({
           dose_number: idx + 1,
-          amount: parseFloat(s.amount),
+          amount: parseInt(s.amount),
           time: s.time,
         })),
+        phone_number: apiPhoneNumber,
       };
 
       await reminderApi.updateReminder(parseInt(id), updatePayload);
@@ -237,7 +345,7 @@ export default function ReminderDetailPage() {
       toast.error(errorMsg);
       console.error(error);
     } finally {
-      setActionLoading(false);
+      setToggleLoading(false);
     }
   };
 
@@ -245,7 +353,7 @@ export default function ReminderDetailPage() {
     if (!reminder) return;
 
     try {
-      setActionLoading(true);
+      setToggleLoading(true);
       if (reminder.is_active) {
         await reminderApi.deactivateReminder(reminder.id);
         toast.success("Reminder deactivated");
@@ -259,28 +367,50 @@ export default function ReminderDetailPage() {
       toast.error(errorMsg);
       console.error(error);
     } finally {
-      setActionLoading(false);
+      setToggleLoading(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (!reminder) return;
-    if (!confirm("Are you sure you want to delete this reminder?")) return;
 
     try {
-      setActionLoading(true);
+      setDeleteLoading(true);
       await reminderApi.deleteReminder(reminder.id);
       toast.success("Reminder deleted successfully");
+      setShowDeleteDialog(false);
       router.push("/allreminder");
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || "Failed to delete reminder";
       toast.error(errorMsg);
       console.error(error);
-      setActionLoading(false);
+      setDeleteLoading(false);
     }
   };
 
   const addDoseSchedule = () => {
+    if (editData.dose_schedules.length >= 10) {
+      toast.error("Maximum 10 doses allowed");
+      return;
+    }
+    
+    // ✅ Find a unique time
+    const existingTimes = editData.dose_schedules.map(s => s.time);
+    let newTime = "08:00";
+    
+    // Generate unique time
+    for (let hour = 8; hour < 24; hour++) {
+      const testTime = `${String(hour).padStart(2, '0')}:00`;
+      if (!existingTimes.includes(testTime)) {
+        newTime = testTime;
+        break;
+      }
+    }
+    
     setEditData({
       ...editData,
       dose_schedules: [
@@ -288,7 +418,7 @@ export default function ReminderDetailPage() {
         {
           dose_number: editData.dose_schedules.length + 1,
           amount: "1",
-          time: "08:00",
+          time: newTime,
         },
       ],
     });
@@ -308,7 +438,33 @@ export default function ReminderDetailPage() {
   const updateDoseSchedule = (index: number, field: string, value: string) => {
     const newSchedules = [...editData.dose_schedules];
     newSchedules[index] = { ...newSchedules[index], [field]: value };
+    
+    // ✅ Check for duplicate times when time field is updated
+    if (field === "time") {
+      const times = newSchedules.map(s => s.time);
+      const duplicates = times.filter((time, idx) => time === value && idx !== index);
+      
+      if (duplicates.length > 0) {
+        toast.error("This time is already used by another dose");
+        return;
+      }
+    }
+    
     setEditData({ ...editData, dose_schedules: newSchedules });
+  };
+
+  // ✅ Toggle notification method
+  const toggleNotificationMethod = (method: string) => {
+    const current = editData.notification_methods;
+    let updated: string[];
+    
+    if (current.includes(method)) {
+      updated = current.filter(m => m !== method);
+    } else {
+      updated = [...current, method];
+    }
+    
+    setEditData({ ...editData, notification_methods: updated });
   };
 
   const formatTime = (time: string) => {
@@ -324,16 +480,6 @@ export default function ReminderDetailPage() {
       month: "long",
       day: "numeric",
       year: "numeric",
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
@@ -354,6 +500,8 @@ export default function ReminderDetailPage() {
   const isLowStock =
     parseFloat(reminder.quantity) <= parseFloat(reminder.refill_threshold);
 
+  const MedicineIcon = getMedicineIcon(isEditing ? editData.medicine_type : reminder.medicine_type);
+
   return (
     <div className="container mx-auto p-6 max-w-7xl h-145 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
       {/* Header */}
@@ -371,7 +519,7 @@ export default function ReminderDetailPage() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-3 bg-blue-100 rounded-xl">
-                <Pill className="w-8 h-8 text-blue-600" />
+                <MedicineIcon className="w-8 h-8 text-blue-600" />
               </div>
               <div>
                 {isEditing ? (
@@ -380,7 +528,7 @@ export default function ReminderDetailPage() {
                     onChange={(e) =>
                       setEditData({ ...editData, medicine_name: e.target.value })
                     }
-                    className="text-3xl font-bold h-12 mb-2 bg-white"
+                    className="text-3xl font-bold h-12 mb-2"
                     placeholder="Medicine name"
                   />
                 ) : (
@@ -436,10 +584,10 @@ export default function ReminderDetailPage() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleSave}
-                  disabled={actionLoading}
+                  disabled={toggleLoading}
                   size="sm"
                 >
-                  {actionLoading ? (
+                  {toggleLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
@@ -451,7 +599,7 @@ export default function ReminderDetailPage() {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  disabled={actionLoading}
+                  disabled={toggleLoading}
                   size="sm"
                 >
                   <X className="w-4 h-4 mr-2" />
@@ -504,7 +652,7 @@ export default function ReminderDetailPage() {
                   <Clock className="w-5 h-5" />
                   Dose Schedule
                 </CardTitle>
-                {isEditing && (
+                {isEditing && editData.dose_schedules.length < 10 && (
                   <Button onClick={addDoseSchedule} size="sm" variant="outline">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Dose
@@ -530,12 +678,14 @@ export default function ReminderDetailPage() {
                           <Label className="text-xs">Amount</Label>
                           <Input
                             type="number"
-                            step="0.5"
-                            min="0.5"
+                            min="1"
+                            step="1"
                             value={schedule.amount}
-                            onChange={(e) =>
-                              updateDoseSchedule(index, "amount", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const parsed = parseInt(val);
+                              updateDoseSchedule(index, "amount", isNaN(parsed) ? "" : parsed.toString());
+                            }}
                             className="mt-1"
                           />
                         </div>
@@ -556,7 +706,7 @@ export default function ReminderDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeDoseSchedule(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-300 rounded-full p-2"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -567,11 +717,11 @@ export default function ReminderDetailPage() {
                   reminder.dose_schedules.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="flex items-center justify-between pl-2 pr-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full">
-                          <span className="text-2xl font-bold text-blue-600">
+                        <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                          <span className="text-lg font-bold text-blue-600">
                             {schedule.dose_number}
                           </span>
                         </div>
@@ -580,9 +730,9 @@ export default function ReminderDetailPage() {
                             Dose {schedule.dose_number}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {parseFloat(schedule.amount)}{" "}
+                            {parseInt(schedule.amount)}{" "}
                             {reminder.medicine_type}
-                            {parseFloat(schedule.amount) > 1 ? "s" : ""}
+                            {parseInt(schedule.amount) > 1 ? "s" : ""}
                           </p>
                         </div>
                       </div>
@@ -607,45 +757,147 @@ export default function ReminderDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {reminder.notification_methods.map((method) => (
-                  <Badge
-                    key={method}
-                    variant="outline"
-                    className="px-4 py-2 text-sm capitalize"
-                  >
-                    {method === "push_notification" ? "Push Notification" : method}
-                  </Badge>
-                ))}
-              </div>
+              {isEditing ? (
+                <>
+                  {/* Method Selection */}
+                  <div>
+                    <Label className="text-sm mb-2 block">Select Methods</Label>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={editData.notification_methods.includes("email") ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleNotificationMethod("email")}
+                      >
+                        Email
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editData.notification_methods.includes("sms") ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleNotificationMethod("sms")}
+                      >
+                        SMS
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editData.notification_methods.includes("push_notification") ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleNotificationMethod("push_notification")}
+                      >
+                        Push Notification
+                      </Button>
+                    </div>
+                  </div>
 
-              {reminder.notification_methods.includes("email") && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-900">
-                    <strong>Email:</strong> {userEmail || "Not available"}
-                  </p>
-                </div>
-              )}
-
-              {reminder.notification_methods.includes("push_notification") && (
-                <div className={`p-3 border rounded-lg ${pushPermission === "granted"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-yellow-50 border-yellow-200"
-                  }`}>
-                  <p className="text-sm font-semibold mb-2">
-                    Push Notifications:{" "}
-                    {pushPermission === "granted" ? "Enabled" : "Disabled"}
-                  </p>
-                  {pushPermission !== "granted" && (
-                    <Button
-                      size="sm"
-                      onClick={requestPushPermission}
-                      variant="outline"
-                    >
-                      Enable Push Notifications
-                    </Button>
+                  {/* Email Field */}
+                  {editData.notification_methods.includes("email") && (
+                    <div>
+                      <Label>Email Address</Label>
+                      <Input
+                        type="email"
+                        value={editData.email}
+                        disabled
+                        className="mt-2 bg-gray-100"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Notification will sent on this Email.</p>
+                    </div>
                   )}
-                </div>
+
+                  {/* Phone Field */}
+                  {editData.notification_methods.includes("sms") && (
+                    <div>
+                      <Label>Phone Number</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Select
+                          value={editData.country_code}
+                          onValueChange={(v) => setEditData({ ...editData, country_code: v })}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="+1">+1</SelectItem>
+                            <SelectItem value="+44">+44</SelectItem>
+                            <SelectItem value="+91">+91</SelectItem>
+                            <SelectItem value="+86">+86</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="tel"
+                          placeholder="9876543210"
+                          value={editData.mobile_number}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, "");
+                            setEditData({ ...editData, mobile_number: val });
+                          }}
+                          maxLength={15}
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Combined: {editData.country_code}{editData.mobile_number}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Push Permission */}
+                  {editData.notification_methods.includes("push_notification") && (
+                    <div className={`p-3 border rounded-lg ${pushPermission === "granted" ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
+                      <p className="text-sm font-semibold mb-2">
+                        Push Notifications: {pushPermission === "granted" ? "Enabled" : "Disabled"}
+                      </p>
+                      {pushPermission !== "granted" && (
+                        <Button size="sm" onClick={requestPushPermission} variant="outline">
+                          Enable Push Notifications
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* ✅ Show all notification methods */}
+                  <div className="flex flex-wrap gap-2">
+                    {reminder.notification_methods.map((method) => (
+                      <Badge key={method} variant="outline" className="px-4 py-2 text-sm capitalize">
+                        {method === "push_notification" ? "Push Notification" : method}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {/* ✅ Show Email if enabled */}
+                  {reminder.notification_methods.includes("email") && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-900">
+                        <strong>Email:</strong> {userEmail || "Not available"}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ✅ Show SMS/Phone if enabled */}
+                  {reminder.notification_methods.includes("sms") && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-900">
+                        <strong>Phone:</strong> {userPhone || "Not available"}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ✅ Show Push if enabled */}
+                  {reminder.notification_methods.includes("push_notification") && (
+                    <div className={`p-3 border rounded-lg ${pushPermission === "granted" ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
+                      <p className="text-sm font-semibold mb-2">
+                        Push Notifications: {pushPermission === "granted" ? "Enabled" : "Disabled"}
+                      </p>
+                      {pushPermission !== "granted" && (
+                        <Button size="sm" onClick={requestPushPermission} variant="outline">
+                          Enable Push Notifications
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -667,11 +919,21 @@ export default function ReminderDetailPage() {
                   <Label>Current Quantity</Label>
                   <Input
                     type="number"
-                    min="0"
+                    min="1"
+                    step="1"
                     value={editData.quantity}
-                    onChange={(e) =>
-                      setEditData({ ...editData, quantity: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = parseInt(val);
+                      setEditData({ 
+                        ...editData, 
+                        quantity: isNaN(parsed) ? "" : parsed.toString(),
+                        // Auto-update threshold if enabled
+                        refill_threshold: editData.refill_reminder && !isNaN(parsed) 
+                          ? Math.floor(parsed / 2).toString() 
+                          : editData.refill_threshold
+                      });
+                    }}
                     className="mt-2"
                   />
                 </div>
@@ -680,13 +942,12 @@ export default function ReminderDetailPage() {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Current Stock</span>
                     <span className="text-sm font-semibold">
-                      {parseFloat(reminder.quantity)} 
+                      {parseInt(reminder.quantity)} / {parseInt(reminder.initial_quantity)}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                      className={`h-3 rounded-full transition-all ${isLowStock ? "bg-red-500" : "bg-green-500"
-                        }`}
+                      className={`h-3 rounded-full transition-all ${isLowStock ? "bg-red-500" : "bg-green-500"}`}
                       style={{ width: `${Math.min(quantityPercentage, 100)}%` }}
                     />
                   </div>
@@ -697,12 +958,9 @@ export default function ReminderDetailPage() {
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-red-900">
-                      Low Stock Alert
-                    </p>
+                    <p className="text-sm font-semibold text-red-900">Low Stock Alert</p>
                     <p className="text-xs text-red-700 mt-1">
-                      Stock is below threshold of{" "}
-                      {parseFloat(reminder.refill_threshold)} units
+                      Stock is below threshold of {parseInt(reminder.refill_threshold)} units
                     </p>
                   </div>
                 </div>
@@ -710,15 +968,20 @@ export default function ReminderDetailPage() {
 
               <div className="pt-4 border-t space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">
-                    Refill Reminder
-                  </span>
+                  <span className="text-sm text-gray-600">Refill Reminder</span>
                   {isEditing ? (
                     <Switch
                       checked={editData.refill_reminder}
-                      onCheckedChange={(checked) =>
-                        setEditData({ ...editData, refill_reminder: checked })
-                      }
+                      onCheckedChange={(checked) => {
+                        const qty = parseInt(editData.quantity);
+                        setEditData({ 
+                          ...editData, 
+                          refill_reminder: checked,
+                          refill_threshold: checked && !isNaN(qty) 
+                            ? Math.floor(qty / 2).toString() 
+                            : ""
+                        });
+                      }}
                     />
                   ) : (
                     <Badge variant={reminder.refill_reminder ? "default" : "secondary"}>
@@ -734,41 +997,34 @@ export default function ReminderDetailPage() {
                         <Label>Refill Threshold</Label>
                         <Input
                           type="number"
-                          step="0.5"
-                          min="0"
-                          max={parseFloat(editData.quantity)}
+                          min="1"
+                          step="1"
                           value={editData.refill_threshold}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const parsed = parseInt(val);
                             setEditData({
                               ...editData,
-                              refill_threshold: e.target.value,
-                            })
-                          }
+                              refill_threshold: isNaN(parsed) ? "" : parsed.toString(),
+                            });
+                          }}
                           className="mt-2"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Must be less than or equal to current quantity
+                          Must be less than current quantity
                         </p>
                       </div>
                     ) : (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">
-                            Refill Threshold
-                          </span>
+                          <span className="text-sm text-gray-600">Refill Threshold</span>
                           <span className="text-sm font-semibold">
-                            {parseFloat(reminder.refill_threshold)} units
+                            {parseInt(reminder.refill_threshold)} units
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">
-                            Reminder Sent
-                          </span>
-                          <Badge
-                            variant={
-                              reminder.refill_reminder_sent ? "default" : "outline"
-                            }
-                          >
+                          <span className="text-sm text-gray-600">Reminder Sent</span>
+                          <Badge variant={reminder.refill_reminder_sent ? "default" : "outline"}>
                             {reminder.refill_reminder_sent ? "Yes" : "No"}
                           </Badge>
                         </div>
@@ -791,9 +1047,9 @@ export default function ReminderDetailPage() {
                   className="w-full"
                   variant={reminder.is_active ? "outline" : "default"}
                   onClick={handleToggleActive}
-                  disabled={actionLoading}
+                  disabled={toggleLoading}
                 >
-                  {actionLoading ? (
+                  {toggleLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : reminder.is_active ? (
                     <>
@@ -811,10 +1067,10 @@ export default function ReminderDetailPage() {
                 <Button
                   className="w-full"
                   variant="destructive"
-                  onClick={handleDelete}
-                  disabled={actionLoading}
+                  onClick={handleDeleteClick}
+                  disabled={deleteLoading}
                 >
-                  {actionLoading ? (
+                  {deleteLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <>
@@ -828,6 +1084,28 @@ export default function ReminderDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reminder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this reminder for <strong>{reminder.medicine_name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLoading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
