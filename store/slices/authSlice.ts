@@ -9,6 +9,8 @@ interface User {
   timezone: string;
   phone_number: string | null;
   is_onboarded: boolean;
+  date_joined?: string;
+  last_login?: string | null;
 }
 
 interface AuthState {
@@ -33,9 +35,23 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
     },
+    
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
-        state.user = { ...state.user, ...action.payload };
+        
+        const { user: nestedUser, ...cleanPayload } = action.payload as any;
+        
+        
+        const updateData = nestedUser || cleanPayload;
+        
+        
+        state.user = {
+          ...state.user,
+          ...updateData,
+        };
+        
+        
+        delete (state.user as any).user;
       }
     },
   },

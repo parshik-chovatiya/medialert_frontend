@@ -6,6 +6,19 @@ export interface OnboardingData {
   gender: string;
 }
 
+export interface ProfileUpdateData {
+  name?: string;
+  birthdate?: string;
+  gender?: string;
+  phone_number?: string;
+}
+
+export interface PasswordChangeData {
+  old_password: string;
+  new_password: string;
+  new_password2: string;
+}
+
 export const authApi = {
   login: (data: { email: string; password: string }) =>
     axiosClient.post("/auth/login/", data),
@@ -21,7 +34,6 @@ export const authApi = {
     try {
       await axiosClient.post("/auth/logout/");
     } finally {
-      // Clear localStorage flags even if API fails
       if (typeof window !== 'undefined') {
         localStorage.removeItem('onboarding_completed');
         localStorage.removeItem('onboardingData');
@@ -29,6 +41,7 @@ export const authApi = {
     }
   },
 
+  // ✅ Fixed: /api/auth/me/
   me: () => axiosClient.get("/auth/me/"),
 
   // Onboarding endpoints
@@ -37,4 +50,12 @@ export const authApi = {
 
   getOnboardingStatus: () =>
     axiosClient.get("/onboarding/status/"),
+
+  // ✅ Fixed: /api/profile/update/
+  updateProfile: (data: ProfileUpdateData) =>
+    axiosClient.patch("/profile/update/", data),
+
+  // ✅ Fixed: /api/profile/change-password/
+  changePassword: (data: PasswordChangeData) =>
+    axiosClient.post("/profile/change-password/", data),
 };

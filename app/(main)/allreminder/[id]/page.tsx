@@ -80,7 +80,6 @@ export default function ReminderDetailPage() {
   const user = useAppSelector((state) => state.auth.user);
   const userEmail = user?.email || "";
   const userPhone = user?.phone_number || "";
-
   const [reminder, setReminder] = useState<ReminderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggleLoading, setToggleLoading] = useState(false);
