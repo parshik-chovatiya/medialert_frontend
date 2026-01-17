@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+//const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 //const BASE_URL = "http://192.168.29.38:8000/api";
-//const BASE_URL = "https://maria-unhelpable-chelsie.ngrok-free.dev/api";
+const BASE_URL = "https://maria-unhelpable-chelsie.ngrok-free.dev/api";
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
