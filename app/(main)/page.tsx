@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import DateStrip from "@/components/date-strip";
 import OnboardingDialog from "@/components/onboarding/OnboardingDialog";
 import AuthComponent from "@/components/AuthComponent";
@@ -82,19 +82,19 @@ const ClockIcon: React.FC = () => (
 
 const EmailIcon: React.FC = () => (
     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
     </svg>
 );
 
 const SmsIcon: React.FC = () => (
     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 11H7V9h2v2zm4 0h-2V9h2v2zm4 0h-2V9h2v2z"/>
+        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 11H7V9h2v2zm4 0h-2V9h2v2zm4 0h-2V9h2v2z" />
     </svg>
 );
 
 const DesktopIcon: React.FC = () => (
     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/>
+        <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z" />
     </svg>
 );
 
@@ -148,7 +148,7 @@ const DoseCard: React.FC<DoseCardProps> = ({ dose, medicineType, notificationMet
     };
 
     return (
-        <div 
+        <div
             className="flex items-center gap-4 py-2 pr-4 pl-2 border rounded-full transition-all duration-200 hover:shadow-md hover:border-primary/30"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -192,9 +192,9 @@ interface UpcomingDosesSectionProps {
     onLoginClick: () => void;
 }
 
-const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({ 
-    doses, 
-    loading, 
+const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({
+    doses,
+    loading,
     selectedDate,
     isAuthenticated,
     onLoginClick
@@ -226,7 +226,7 @@ const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({
     return (
         <div className="rounded-lg bg-white p-6 overflow-hidden flex flex-col shadow-lg relative">
             <h2 className="text-2xl font-bold mb-2">Upcoming Doses</h2>
-            
+
             {/* Unauthenticated overlay */}
             {!isAuthenticated && (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-4 rounded-lg">
@@ -267,9 +267,9 @@ const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({
                     </div>
                 ) : (
                     doses.map((dose) => (
-                        <DoseCard 
-                            key={dose.id} 
-                            dose={dose} 
+                        <DoseCard
+                            key={dose.id}
+                            dose={dose}
                             medicineType={dose.medicineType}
                             notificationMethods={dose.notificationMethods}
                         />
@@ -284,7 +284,14 @@ export default function Dashboard() {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state) => state.auth.user);
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-    
+
+    // Keep a ref so fetchDoses can read the latest auth state
+    // without being listed as a useCallback dependency.
+    const isAuthenticatedRef = useRef(isAuthenticated);
+    useEffect(() => {
+        isAuthenticatedRef.current = isAuthenticated;
+    }, [isAuthenticated]);
+
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -311,32 +318,32 @@ export default function Dashboard() {
     // Check if a time string is in the future (for today's date only)
     const isTimeFuture = (timeString: string, dateString: string): boolean => {
         const today = formatDate(new Date());
-        
+
         // If the selected date is not today, show all doses
         if (dateString !== today) {
             return true;
         }
-        
+
         // For today, check if time is in the future
         const now = new Date();
         const [hours, minutes] = timeString.split(':').map(Number);
         const doseTime = new Date();
         doseTime.setHours(hours, minutes, 0, 0);
-        
+
         return doseTime > now;
     };
 
     // Transform API response to Dose array
     const transformApiResponse = useCallback((data: DashboardResponse): Dose[] => {
         const transformedDoses: Dose[] = [];
-        
+
         data.doses.forEach((doseTime) => {
             // Only include doses that are in the future (for today)
             if (isTimeFuture(doseTime.time, data.selected_date)) {
                 doseTime.reminders.forEach((reminder) => {
                     const medicineType = reminder.medicine_type.charAt(0).toUpperCase() + reminder.medicine_type.slice(1);
                     const instruction = `Take ${reminder.amount} ${medicineType}${parseFloat(reminder.amount) > 1 ? 's' : ''}`;
-                    
+
                     transformedDoses.push({
                         id: `${reminder.reminder_id}-${reminder.dose_number}-${doseTime.time}`,
                         name: reminder.medicine_name,
@@ -348,13 +355,15 @@ export default function Dashboard() {
                 });
             }
         });
-        
+
         return transformedDoses;
     }, []);
 
-    // Fetch doses from API using axiosClient
+    // Fetch doses from API using axiosClient.
+    // Uses isAuthenticatedRef so the function reference stays stable
+    // and doesn't re-trigger every useEffect that depends on it.
     const fetchDoses = useCallback(async (dateString: string) => {
-        if (!isAuthenticated) {
+        if (!isAuthenticatedRef.current) {
             setDoses([]);
             setLoading(false);
             return;
@@ -365,7 +374,7 @@ export default function Dashboard() {
             const response = await axiosClient.get('/reminders/dashboard/', {
                 params: { date: dateString }
             });
-            
+
             const data: DashboardResponse = response.data.data;
             const transformedDoses = transformApiResponse(data);
             setDoses(transformedDoses);
@@ -375,14 +384,23 @@ export default function Dashboard() {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, transformApiResponse]);
+    }, [transformApiResponse]); // stable — no isAuthenticated dep
 
-    // Fetch doses when selected date changes
+    // Re-fetch when the selected date changes (user taps a date on the strip).
     useEffect(() => {
         if (selectedDate) {
             fetchDoses(selectedDate);
         }
-    }, [selectedDate, fetchDoses]);
+    }, [selectedDate]); // fetchDoses is now stable, safe to omit
+
+    // Re-fetch when auth state changes (login / logout).
+    // Kept separate so it fires exactly once on auth change,
+    // without interfering with the date-change effect above.
+    useEffect(() => {
+        if (selectedDate) {
+            fetchDoses(selectedDate);
+        }
+    }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Handle date selection from DateStrip - using useCallback to prevent infinite loop
     const handleDateChange = useCallback((date: Date) => {
@@ -396,27 +414,28 @@ export default function Dashboard() {
         setSelectedDate(today);
     }, []);
 
-    // Auto-refresh doses every minute to hide past reminders without page refresh
+    // Auto-refresh doses every minute to hide past reminders without page refresh.
+    // fetchDoses is now stable, so this effect only re-runs when selectedDate
+    // or isAuthenticated genuinely change — not on every render.
     useEffect(() => {
         if (!selectedDate || !isAuthenticated) return;
-        
+
         const today = formatDate(new Date());
         // Only set up auto-refresh for today's date
         if (selectedDate !== today) return;
-        
+
         const interval = setInterval(() => {
-            // Re-fetch data to filter out past reminders
             fetchDoses(selectedDate);
         }, 60000); // Check every minute
-        
+
         return () => clearInterval(interval);
-    }, [selectedDate, fetchDoses, isAuthenticated]);
+    }, [selectedDate, isAuthenticated]); // fetchDoses is stable, safe to omit
 
     useEffect(() => {
         // Only check for guest onboarding if not authenticated
         if (!isAuthenticated) {
             const isGuestOnboardingCompleted = localStorage.getItem('guest_onboarding_completed');
-            
+
             if (!isGuestOnboardingCompleted) {
                 setShowOnboarding(true);
             }
@@ -444,9 +463,9 @@ export default function Dashboard() {
             </main>
             <div className="grid h-84 grid-cols-2 gap-4 px-4">
                 {/* Left Side */}
-                <UpcomingDosesSection 
-                    doses={doses} 
-                    loading={loading} 
+                <UpcomingDosesSection
+                    doses={doses}
+                    loading={loading}
                     selectedDate={selectedDate}
                     isAuthenticated={isAuthenticated}
                     onLoginClick={handleLoginClick}
@@ -509,14 +528,14 @@ export default function Dashboard() {
             </div>
 
             {/* Onboarding Dialog */}
-            <OnboardingDialog 
-                open={showOnboarding} 
-                onOpenChange={setShowOnboarding} 
+            <OnboardingDialog
+                open={showOnboarding}
+                onOpenChange={setShowOnboarding}
                 onComplete={handleOnboardingComplete}
             />
 
             {/* Auth Modal */}
-            <AuthComponent 
+            <AuthComponent
                 isOpen={showAuthModal}
                 onClose={handleAuthClose}
             />

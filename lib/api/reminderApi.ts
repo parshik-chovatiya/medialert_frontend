@@ -31,7 +31,7 @@ export const reminderApi = {
   },
 
   // Delete reminder
-  deleteReminder: (id: number) => {
+  deleteReminder: (id: string) => {
     return axiosClient.delete(`/reminders/${id}/`);
   },
 

@@ -41,21 +41,17 @@ export const authApi = {
     }
   },
 
-  // ✅ Fixed: /api/auth/me/
   me: () => axiosClient.get("/auth/me/"),
 
-  // Onboarding endpoints
   completeOnboarding: (data: OnboardingData) =>
     axiosClient.post("/onboarding/", data),
 
   getOnboardingStatus: () =>
     axiosClient.get("/onboarding/status/"),
 
-  // ✅ Fixed: /api/profile/update/
   updateProfile: (data: ProfileUpdateData) =>
     axiosClient.patch("/profile/update/", data),
 
-  // ✅ Fixed: /api/profile/change-password/
   changePassword: (data: PasswordChangeData) =>
     axiosClient.post("/profile/change-password/", data),
 };

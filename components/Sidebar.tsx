@@ -6,6 +6,7 @@ import {
   PillBottle,
   TrendingUp,
   ClipboardList,
+  Archive,
   Settings,
   LogOut,
   User
@@ -32,14 +33,15 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const dispatch = useAppDispatch()
-  
+
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
 
   const top = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-    { icon: PillBottle, label:'Add Medicine Reminder', href: '/reminder' },
+    { icon: PillBottle, label: 'Add Medicine Reminder', href: '/reminder' },
     { icon: ClipboardList, label: 'Medicine Reminder List', href: '/allreminder' },
+    { icon: Archive, label: 'Inventory', href: '/inventory' },
     { icon: TrendingUp, label: 'Progress', href: '/progress' },
   ]
 
@@ -54,26 +56,26 @@ export function Sidebar() {
   const handleLogoutConfirm = async () => {
     try {
       setLoggingOut(true)
-      
+
       // Call logout API
       await authApi.logout()
-      
+
       // Clear Redux state
       dispatch(clearUser())
       dispatch(clearOnboardingData())
-      
+
       // Clear local storage flags
       localStorage.removeItem('onboarding_completed')
       localStorage.removeItem('guest_onboarding_completed')
-      
+
       toast.success("Logged out successfully")
-      
+
       // Close dialog
       setShowLogoutDialog(false)
-      
+
       // Redirect to home page
       router.push("/")
-      
+
     } catch (error) {
       console.error("Logout error:", error)
       toast.error("Failed to logout. Please try again.")
@@ -107,7 +109,7 @@ export function Sidebar() {
           >
             <span className="absolute inset-0 rounded-4xl group-hover:bg-[#5669fe]/30" />
             <LogOut className="w-5 h-5 relative z-10" />
-            
+
             {/* Tooltip */}
             <span className="absolute left-full ml-3 px-3 py-1.5 text-xs rounded-md bg-black text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap">
               Logout
@@ -134,7 +136,7 @@ export function Sidebar() {
               You will be redirected to the home page and will need to login again to access your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter> 
+          <AlertDialogFooter>
             <AlertDialogCancel disabled={loggingOut}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLogoutConfirm}
