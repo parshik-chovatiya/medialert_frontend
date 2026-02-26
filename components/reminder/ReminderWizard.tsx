@@ -78,7 +78,7 @@ export default function ReminderWizard({
       phone_number: "",
       browser_permission: false,
       start_date: "",
-      quantity: 0,
+      quantity: undefined as unknown as number,
       refill_reminder: false,
       refill_threshold: undefined,
       dose_schedules: [
@@ -236,11 +236,10 @@ export default function ReminderWizard({
     <div className="relative">
       {/* Main Wizard Content */}
       <div
-        className={`transition-all ${
-          !isAuthenticated
+        className={`transition-all ${!isAuthenticated
             ? "blur-sm pointer-events-none select-none"
             : ""
-        }`}
+          }`}
       >
         <div className="flex flex-col">
           <div className="w-full max-w-6xl mx-auto px-4 pt-2">
@@ -295,13 +294,12 @@ export default function ReminderWizard({
                       {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                         <div
                           key={i}
-                          className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-                            i + 1 === step
+                          className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${i + 1 === step
                               ? "bg-primary w-5"
                               : i + 1 < step
-                              ? "bg-primary/50"
-                              : "bg-gray-300"
-                          }`}
+                                ? "bg-primary/50"
+                                : "bg-gray-300"
+                            }`}
                         />
                       ))}
                     </div>
@@ -346,7 +344,7 @@ export default function ReminderWizard({
       )}
 
       {/* Auth Modal */}
-      <AuthComponent 
+      <AuthComponent
         isOpen={showAuthModal}
         onClose={handleAuthClose}
       />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useAppSelector } from "@/store/hooks";
 import {
@@ -29,13 +29,13 @@ const NOTIFICATION_OPTIONS: NotificationOption[] = [
 
 const COUNTRY_CODES = [
   { value: "+1", label: "+1", },
-  { value: "+44", label: "+44"},
-  { value: "+91", label: "+91"},
-  { value: "+86", label: "+86"},
-  { value: "+81", label: "+81"},
-  { value: "+49", label: "+49"},
-  { value: "+33", label: "+33"},
-  { value: "+61", label: "+61"},
+  { value: "+44", label: "+44" },
+  { value: "+91", label: "+91" },
+  { value: "+86", label: "+86" },
+  { value: "+81", label: "+81" },
+  { value: "+49", label: "+49" },
+  { value: "+33", label: "+33" },
+  { value: "+61", label: "+61" },
 ];
 
 interface Step2Props {
@@ -58,16 +58,59 @@ export function Step2DosesNotifications({ form }: Step2Props) {
     }
   }, [userEmail, form]);
 
-  const toggleNotification = (value: string) => {
+  const [pushError, setPushError] = useState<string | null>(null);
+
+  const toggleNotification = async (value: string) => {
     const current = form.getValues("notification_methods") || [];
+
+    // Deselecting — always allow
     if (current.includes(value)) {
       form.setValue(
         "notification_methods",
         current.filter((v) => v !== value)
       );
-    } else {
-      form.setValue("notification_methods", [...current, value]);
+      if (value === "push") {
+        form.setValue("browser_permission", false);
+        setPushError(null);
+      }
+      form.trigger("notification_methods");
+      return;
     }
+
+    // Selecting "push" — check / request permission first
+    if (value === "push") {
+      setPushError(null);
+
+      if (!("Notification" in window)) {
+        setPushError("Browser notifications are not supported in this browser.");
+        return;
+      }
+
+      let permission = Notification.permission;
+
+      if (permission === "denied") {
+        setPushError(
+          "Notification permission is blocked. Please enable it in your browser settings."
+        );
+        return;
+      }
+
+      if (permission === "default") {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission !== "granted") {
+        setPushError(
+          "Notification permission was not granted. Please allow notifications to use this feature."
+        );
+        return;
+      }
+
+      // Permission is granted — select and mark
+      form.setValue("browser_permission", true);
+    }
+
+    form.setValue("notification_methods", [...current, value]);
     form.trigger("notification_methods");
   };
 
@@ -95,7 +138,7 @@ export function Step2DosesNotifications({ form }: Step2Props) {
               onValueChange={(v) => {
                 const doseCount = Number(v);
                 field.onChange(doseCount);
-                
+
                 // Update dose schedules
                 const schedules = Array.from({ length: doseCount }, (_, i) => ({
                   dose_number: i + 1,
@@ -138,11 +181,10 @@ export function Step2DosesNotifications({ form }: Step2Props) {
                     key={option.value}
                     type="button"
                     onClick={() => toggleNotification(option.value)}
-                    className={`px-4 py-1 rounded-lg border-2 transition-all font-medium text-sm whitespace-nowrap flex-shrink-0 ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background text-foreground border-border hover:border-primary/50"
-                    }`}
+                    className={`px-4 py-1 rounded-lg border-2 transition-all font-medium text-sm whitespace-nowrap flex-shrink-0 ${isSelected
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-foreground border-border hover:border-primary/50"
+                      }`}
                   >
                     {option.label}
                   </button>
@@ -150,6 +192,11 @@ export function Step2DosesNotifications({ form }: Step2Props) {
               })}
             </div>
             <FormMessage />
+            {pushError && (
+              <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                {pushError}
+              </p>
+            )}
           </FormItem>
         )}
       />
@@ -257,48 +304,23 @@ export function Step2DosesNotifications({ form }: Step2Props) {
           )}
 
           {notificationMethods.includes("push") && (
-            <FormField
-              control={form.control}
-              name="browser_permission"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
-                    <div className="space-y-0.5">
-                      <FormLabel>Browser Notifications</FormLabel>
-                      <FormDescription>
-                        {field.value
-                          ? "Permission granted"
-                          : "Enable to receive browser notifications"}
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={field.value || false}
-                          onChange={async (e) => {
-                            if (e.target.checked) {
-                              if ("Notification" in window) {
-                                const permission =
-                                  await Notification.requestPermission();
-                                field.onChange(permission === "granted");
-                              } else {
-                                alert("Browser notifications not supported");
-                              }
-                            } else {
-                              field.onChange(false);
-                            }
-                          }}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="flex items-center gap-2 p-3 rounded-lg border bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                Browser notification permission granted
+              </p>
+            </div>
           )}
         </div>
       )}

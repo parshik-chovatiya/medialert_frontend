@@ -20,7 +20,7 @@ export interface PasswordChangeData {
 }
 
 export const authApi = {
-  login: (data: { email: string; password: string }) =>
+  login: (data: { email: string; password: string; device_token?: string }) =>
     axiosClient.post("/auth/login/", data),
 
   register: (data: {

@@ -87,19 +87,20 @@ export const fullSchema = z.object({
   medicine_name: z.string().min(1, "Medicine name is required"),
   medicine_type: z.string().min(1, "Medicine type is required"),
   dose_count_daily: z.number().min(1).max(10),
-  notification_methods: z.array(z.string()).min(1, "select at least one notification method"),
+  notification_methods: z.array(z.string()).min(1, "Select at least one notification method"),
   email: z.string().optional(),
   phone_number: z.string().optional(),
   browser_permission: z.boolean().optional(),
-  start_date: z.string().min(1,"start date is required"),
-  quantity: z.number().min(1),
+  start_date: z.string().min(1, "Start date is required"),
+  quantity: z.number({ message: "Please enter a valid quantity" })
+    .min(1, "Quantity must be at least 1"),
   refill_reminder: z.boolean(),
-  refill_threshold: z.number().optional(),
+  refill_threshold: z.number({ message: "Please enter a valid number" }).optional(),
   dose_schedules: z.array(
     z.object({
       dose_number: z.number(),
-      amount: z.number().min(1),
-      time: z.string().min(1,"time is required"),
+      amount: z.number().min(1, "Amount must be at least 1"),
+      time: z.string().min(1, "Time is required"),
     })
   ),
 });

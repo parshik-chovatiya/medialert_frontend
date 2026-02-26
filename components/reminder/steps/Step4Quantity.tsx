@@ -20,6 +20,17 @@ interface Step4Props {
 export function Step4Quantity({ form }: Step4Props) {
   const refillReminder = form.watch("refill_reminder");
   const quantity = form.watch("quantity");
+  const refillThreshold = form.watch("refill_threshold");
+
+  // Real-time validation: refill threshold must be less than quantity
+  const refillError =
+    refillReminder && refillThreshold !== undefined && quantity !== undefined
+      ? refillThreshold <= 0
+        ? "Refill threshold must be greater than 0"
+        : refillThreshold >= quantity
+          ? `Refill threshold must be less than total quantity (${quantity})`
+          : null
+      : null;
 
   return (
     <div className="space-y-4">
@@ -113,6 +124,11 @@ export function Step4Quantity({ form }: Step4Props) {
                   level
                   {quantity && ` (must be less than ${quantity})`}
                 </FormDescription>
+                {refillError && (
+                  <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                    {refillError}
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}

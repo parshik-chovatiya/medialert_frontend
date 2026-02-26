@@ -133,11 +133,9 @@ export function Step3Timing({ form }: Step3Props) {
                         {...field}
                         onChange={(e) => {
                           field.onChange(e.target.value);
-                          setTimeout(() => form.trigger("dose_schedules"), 100);
                         }}
-                        className={`w-full h-8 text-sm bg-white ${
-                          duplicateIndices.includes(index) ? "border-red-500" : ""
-                        }`}
+                        className={`w-full h-8 text-sm bg-white ${duplicateIndices.includes(index) ? "border-red-500" : ""
+                          }`}
                       />
                     </FormControl>
                     <FormMessage />
