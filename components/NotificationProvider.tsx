@@ -2,18 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { useAppSelector } from "@/store/hooks";
-import { requestNotificationPermission, onMessageListener } from "@/lib/firebase";
+import { requestNotificationPermission, subscribeToMessages } from "@/lib/firebase";
 import { notificationApi } from "@/lib/api/notificationApi";
 import { toast } from "sonner";
 
-/**
- * NotificationProvider
- *
- * Handles the full FCM push notification lifecycle:
- * 1. When an authenticated user is detected, requests notification permission
- * 2. On permission grant, retrieves the FCM token and sends it to the backend
- * 3. Listens for foreground messages and displays them as Sonner toasts
- */
 export default function NotificationProvider({
     children,
 }: {
@@ -22,12 +14,12 @@ export default function NotificationProvider({
     const { isAuthenticated } = useAppSelector((state) => state.auth);
     const tokenRegistered = useRef(false);
 
+    // ── 1. Register service worker + FCM token once after login ──────────────
     useEffect(() => {
         if (!isAuthenticated || tokenRegistered.current) return;
 
         const registerToken = async () => {
             try {
-                // Register the SW with Firebase config as query params
                 if ("serviceWorker" in navigator) {
                     const swParams = new URLSearchParams({
                         apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
@@ -57,32 +49,26 @@ export default function NotificationProvider({
         registerToken();
     }, [isAuthenticated]);
 
-    // Listen for foreground messages
+    // ── 2. Subscribe to foreground messages (persistent subscription) ─────────
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        const listenForMessages = async () => {
-            try {
-                const payload = await onMessageListener();
-                const title = payload?.notification?.title || "MedAlert";
-                const body = payload?.notification?.body || "You have a new notification";
+        // subscribeToMessages fires for every message and returns unsubscribe fn
+        const unsubscribe = subscribeToMessages((payload) => {
+            const title = payload?.notification?.title || "MediAlert";
+            const body = payload?.notification?.body || "You have a new notification";
 
-                toast(title, {
-                    description: body,
-                    duration: 6000,
-                });
+            toast(title, {
+                description: body,
+                duration: 6000,
+            });
+        });
 
-                // Continue listening for next messages
-                listenForMessages();
-            } catch (error) {
-                console.error("Error listening for foreground messages:", error);
-            }
-        };
-
-        listenForMessages();
+        // Clean up listener when user logs out or component unmounts
+        return () => unsubscribe();
     }, [isAuthenticated]);
 
-    // Reset token registration on logout
+    // ── 3. Reset token flag on logout so it re-registers after next login ─────
     useEffect(() => {
         if (!isAuthenticated) {
             tokenRegistered.current = false;

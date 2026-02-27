@@ -55,12 +55,16 @@ export async function requestNotificationPermission(): Promise<string | null> {
   }
 }
 
-export function onMessageListener(): Promise<MessagePayload> {
-  return new Promise((resolve) => {
-    if (messaging) {
-      onMessage(messaging, (payload) => {
-        resolve(payload);
-      });
-    }
-  });
+/**
+ * Subscribe to foreground FCM messages.
+ * Returns an unsubscribe function — call it in a useEffect cleanup.
+ * The callback fires every time a message arrives (not just once).
+ */
+export function subscribeToMessages(
+  callback: (payload: MessagePayload) => void
+): () => void {
+  if (!messaging) return () => {};
+  // onMessage returns an unsubscribe function
+  const unsubscribe = onMessage(messaging, callback);
+  return unsubscribe;
 }

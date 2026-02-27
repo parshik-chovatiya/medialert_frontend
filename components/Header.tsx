@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import logo from '../public/logo.png'
-import { Bell, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useAppSelector } from "@/store/hooks"
 
@@ -32,7 +32,7 @@ export function Header() {
                             <Image src={logo} alt="Logo" className="object-contain" />
                         </div>
                     </div>
-                    <div>
+                    <div className="pl-8">
                         <p className="text-lg font-semibold">{greeting}</p>
                         <p className="text-sm opacity-70">{subtext}</p>
                     </div>
@@ -42,11 +42,6 @@ export function Header() {
                 <div className="flex items-center gap-3 ">
                     <HeaderIcon>
                         <Link href='/reminder'><Plus className="w-5 h-5" /></Link>
-                    </HeaderIcon>
-
-                    <HeaderIcon>
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
                     </HeaderIcon>
                 </div>
             </div>

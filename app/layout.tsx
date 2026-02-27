@@ -9,7 +9,7 @@ import NotificationProvider from "@/components/NotificationProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "MedAlert",
+  title: "MediAlert",
   description: "Medicine reminder application",
   icons: {
     icon: "/logo.png",
@@ -25,12 +25,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ReduxProvider>
-          <NotificationProvider>
-            {/* <AuthProvider> */}
-            {children}
-            {/* </AuthProvider> */}
-          </NotificationProvider>
-          <Toaster />
+          <AuthProvider>
+            <NotificationProvider>
+              {children}
+              <Toaster />
+            </NotificationProvider>
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>

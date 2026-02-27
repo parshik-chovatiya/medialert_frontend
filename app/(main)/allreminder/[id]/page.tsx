@@ -4,78 +4,24 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { reminderApi } from "@/lib/api/reminderApi";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Loader2, Pill, Thermometer, Syringe, Droplet } from "lucide-react";
+import type { ReminderDetail, EditData, DoseSchedule } from "@/components/reminder-detail/types";
 import {
-  Pill,
-  Clock,
-  Calendar,
-  Package,
-  Bell,
-  AlertCircle,
-  Power,
-  PowerOff,
-  Trash2,
-  Loader2,
-  ArrowLeft,
-  CheckCircle2,
-  XCircle,
-  Edit,
-  Save,
-  X,
-  Plus,
-  Trash,
-  Thermometer,
-  Syringe,
-  Droplet,
-} from "lucide-react";
-
-interface DoseSchedule {
-  id?: number;
-  dose_number: number;
-  amount: string;
-  time: string;
-}
-
-interface ReminderDetail {
-  id: number;
-  medicine_name: string;
-  medicine_type: string;
-  dose_count_daily: number;
-  notification_methods: string[];
-  start_date: string;
-  quantity: string;
-  initial_quantity: string;
-  refill_reminder: boolean;
-  refill_threshold: string;
-  refill_reminder_sent: boolean;
-  is_active: boolean;
-  dose_schedules: DoseSchedule[];
-  created_at: string;
-  updated_at: string;
-}
+  DetailHeader,
+  OverviewCard,
+  DoseScheduleCard,
+  NotificationCard,
+  StockCard,
+  ActionsCard,
+  DeleteDialog,
+} from "@/components/reminder-detail";
 
 export default function ReminderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  
+
   // ✅ Fetch user data from Redux
   const user = useAppSelector((state) => state.auth.user);
   const userEmail = user?.email || "";
@@ -88,18 +34,18 @@ export default function ReminderDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Edit state
-  const [editData, setEditData] = useState({
+  const [editData, setEditData] = useState<EditData>({
     medicine_name: "",
     medicine_type: "tablet",
     quantity: "",
     refill_reminder: false,
     refill_threshold: "",
-    notification_methods: [] as string[],
+    notification_methods: [],
     email: "",
     country_code: "+91",
     mobile_number: "",
     phone_number: "",
-    dose_schedules: [] as DoseSchedule[],
+    dose_schedules: [],
   });
 
   const [pushPermission, setPushPermission] = useState<NotificationPermission>("default");
@@ -155,7 +101,7 @@ export default function ReminderDetailPage() {
       // ✅ Parse phone number
       let countryCode = "+91";
       let mobileNumber = "";
-      
+
       if (userPhone) {
         const phoneMatch = userPhone.match(/^(\+\d{1,3})(.+)$/);
         if (phoneMatch) {
@@ -202,7 +148,7 @@ export default function ReminderDetailPage() {
     if (reminder) {
       let countryCode = "+91";
       let mobileNumber = "";
-      
+
       if (userPhone) {
         const phoneMatch = userPhone.match(/^(\+\d{1,3})(.+)$/);
         if (phoneMatch) {
@@ -292,7 +238,7 @@ export default function ReminderDetailPage() {
 
     // ✅ Validate notification methods
     const updatedMethods = [...editData.notification_methods];
-    
+
     // Check SMS
     if (updatedMethods.includes("sms")) {
       if (!editData.mobile_number || editData.mobile_number.length < 10) {
@@ -379,7 +325,7 @@ export default function ReminderDetailPage() {
 
     try {
       setDeleteLoading(true);
-      await reminderApi.deleteReminder(reminder.id);
+      await reminderApi.deleteReminder(reminder.id.toString());
       toast.success("Reminder deleted successfully");
       setShowDeleteDialog(false);
       router.push("/allreminder");
@@ -396,11 +342,11 @@ export default function ReminderDetailPage() {
       toast.error("Maximum 10 doses allowed");
       return;
     }
-    
+
     // ✅ Find a unique time
     const existingTimes = editData.dose_schedules.map(s => s.time);
     let newTime = "08:00";
-    
+
     // Generate unique time
     for (let hour = 8; hour < 24; hour++) {
       const testTime = `${String(hour).padStart(2, '0')}:00`;
@@ -409,7 +355,7 @@ export default function ReminderDetailPage() {
         break;
       }
     }
-    
+
     setEditData({
       ...editData,
       dose_schedules: [
@@ -437,18 +383,18 @@ export default function ReminderDetailPage() {
   const updateDoseSchedule = (index: number, field: string, value: string) => {
     const newSchedules = [...editData.dose_schedules];
     newSchedules[index] = { ...newSchedules[index], [field]: value };
-    
+
     // ✅ Check for duplicate times when time field is updated
     if (field === "time") {
       const times = newSchedules.map(s => s.time);
       const duplicates = times.filter((time, idx) => time === value && idx !== index);
-      
+
       if (duplicates.length > 0) {
         toast.error("This time is already used by another dose");
         return;
       }
     }
-    
+
     setEditData({ ...editData, dose_schedules: newSchedules });
   };
 
@@ -456,13 +402,13 @@ export default function ReminderDetailPage() {
   const toggleNotificationMethod = (method: string) => {
     const current = editData.notification_methods;
     let updated: string[];
-    
+
     if (current.includes(method)) {
       updated = current.filter(m => m !== method);
     } else {
       updated = [...current, method];
     }
-    
+
     setEditData({ ...editData, notification_methods: updated });
   };
 
@@ -472,14 +418,6 @@ export default function ReminderDetailPage() {
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
   };
 
   if (loading) {
@@ -504,607 +442,82 @@ export default function ReminderDetailPage() {
   return (
     <div className="container mx-auto p-6 max-w-7xl h-145 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
       {/* Header */}
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/allreminder")}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to All Reminders
-        </Button>
-
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <MedicineIcon className="w-8 h-8 text-blue-600" />
-              </div>
-              <div>
-                {isEditing ? (
-                  <Input
-                    value={editData.medicine_name}
-                    onChange={(e) =>
-                      setEditData({ ...editData, medicine_name: e.target.value })
-                    }
-                    className="text-3xl font-bold h-12 mb-2"
-                    placeholder="Medicine name"
-                  />
-                ) : (
-                  <h1 className="text-3xl font-bold text-gray-900 capitalize">
-                    {reminder.medicine_name}
-                  </h1>
-                )}
-                {isEditing ? (
-                  <Select
-                    value={editData.medicine_type}
-                    onValueChange={(value) =>
-                      setEditData({ ...editData, medicine_type: value })
-                    }
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tablet">Tablet</SelectItem>
-                      <SelectItem value="capsule">Capsule</SelectItem>
-                      <SelectItem value="syrup">Syrup</SelectItem>
-                      <SelectItem value="injection">Injection</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="text-lg text-gray-600 capitalize">
-                    {reminder.medicine_type}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Badge
-              variant={reminder.is_active ? "default" : "secondary"}
-              className="text-sm px-4 py-2"
-            >
-              {reminder.is_active ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Active
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Inactive
-                </>
-              )}
-            </Badge>
-
-            {isEditing ? (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSave}
-                  disabled={toggleLoading}
-                  size="sm"
-                >
-                  {toggleLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={toggleLoading}
-                  size="sm"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <Button onClick={handleEdit} size="sm">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      <DetailHeader
+        reminder={reminder}
+        isEditing={isEditing}
+        editData={editData}
+        toggleLoading={toggleLoading}
+        MedicineIcon={MedicineIcon}
+        onEditDataChange={setEditData}
+        onEdit={handleEdit}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        onBack={() => router.push("/allreminder")}
+      />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Info */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Overview Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Start Date</p>
-                <p className="text-lg font-semibold">
-                  {formatDate(reminder.start_date)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Daily Doses</p>
-                <p className="text-lg font-semibold">
-                  {isEditing ? editData.dose_schedules.length : reminder.dose_count_daily} times per day
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <OverviewCard
+            reminder={reminder}
+            isEditing={isEditing}
+            editData={editData}
+          />
 
-          {/* Dose Schedule Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Dose Schedule
-                </CardTitle>
-                {isEditing && editData.dose_schedules.length < 10 && (
-                  <Button onClick={addDoseSchedule} size="sm" variant="outline">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Dose
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {isEditing ? (
-                  editData.dose_schedules.map((schedule, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full flex-shrink-0">
-                        <span className="text-lg font-bold text-blue-600">
-                          {index + 1}
-                        </span>
-                      </div>
-                      <div className="flex-1 grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Amount</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={schedule.amount}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const parsed = parseInt(val);
-                              updateDoseSchedule(index, "amount", isNaN(parsed) ? "" : parsed.toString());
-                            }}
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Time</Label>
-                          <Input
-                            type="time"
-                            value={schedule.time}
-                            onChange={(e) =>
-                              updateDoseSchedule(index, "time", e.target.value)
-                            }
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                      {editData.dose_schedules.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDoseSchedule(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  reminder.dose_schedules.map((schedule) => (
-                    <div
-                      key={schedule.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                          <span className="text-lg font-bold text-blue-600">
-                            {schedule.dose_number}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            Dose {schedule.dose_number}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {parseInt(schedule.amount)}{" "}
-                            {reminder.medicine_type}
-                            {parseInt(schedule.amount) > 1 ? "s" : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">
-                          {formatTime(schedule.time)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <DoseScheduleCard
+            isEditing={isEditing}
+            editData={editData}
+            reminder={reminder}
+            onAddDose={addDoseSchedule}
+            onRemoveDose={removeDoseSchedule}
+            onUpdateDose={updateDoseSchedule}
+            formatTime={formatTime}
+          />
 
-          {/* Notification Methods Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Notification Methods
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isEditing ? (
-                <>
-                  {/* Method Selection */}
-                  <div>
-                    <Label className="text-sm mb-2 block">Select Methods</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant={editData.notification_methods.includes("email") ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleNotificationMethod("email")}
-                      >
-                        Email
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={editData.notification_methods.includes("sms") ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleNotificationMethod("sms")}
-                      >
-                        SMS
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={editData.notification_methods.includes("push_notification") ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleNotificationMethod("push_notification")}
-                      >
-                        Push Notification
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Email Field */}
-                  {editData.notification_methods.includes("email") && (
-                    <div>
-                      <Label>Email Address</Label>
-                      <Input
-                        type="email"
-                        value={editData.email}
-                        disabled
-                        className="mt-2 bg-gray-100"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Notification will sent on this Email.</p>
-                    </div>
-                  )}
-
-                  {/* Phone Field */}
-                  {editData.notification_methods.includes("sms") && (
-                    <div>
-                      <Label>Phone Number</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Select
-                          value={editData.country_code}
-                          onValueChange={(v) => setEditData({ ...editData, country_code: v })}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="+1">+1</SelectItem>
-                            <SelectItem value="+44">+44</SelectItem>
-                            <SelectItem value="+91">+91</SelectItem>
-                            <SelectItem value="+86">+86</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="tel"
-                          placeholder="9876543210"
-                          value={editData.mobile_number}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9]/g, "");
-                            setEditData({ ...editData, mobile_number: val });
-                          }}
-                          maxLength={15}
-                          className="flex-1"
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Combined: {editData.country_code}{editData.mobile_number}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Push Permission */}
-                  {editData.notification_methods.includes("push_notification") && (
-                    <div className={`p-3 border rounded-lg ${pushPermission === "granted" ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
-                      <p className="text-sm font-semibold mb-2">
-                        Push Notifications: {pushPermission === "granted" ? "Enabled" : "Disabled"}
-                      </p>
-                      {pushPermission !== "granted" && (
-                        <Button size="sm" onClick={requestPushPermission} variant="outline">
-                          Enable Push Notifications
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  {/* ✅ Show all notification methods */}
-                  <div className="flex flex-wrap gap-2">
-                    {reminder.notification_methods.map((method) => (
-                      <Badge key={method} variant="outline" className="px-4 py-2 text-sm capitalize">
-                        {method === "push_notification" ? "Push Notification" : method}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* ✅ Show Email if enabled */}
-                  {reminder.notification_methods.includes("email") && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-900">
-                        <strong>Email:</strong> {userEmail || "Not available"}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ✅ Show SMS/Phone if enabled */}
-                  {reminder.notification_methods.includes("sms") && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-900">
-                        <strong>Phone:</strong> {userPhone || "Not available"}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ✅ Show Push if enabled */}
-                  {reminder.notification_methods.includes("push_notification") && (
-                    <div className={`p-3 border rounded-lg ${pushPermission === "granted" ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
-                      <p className="text-sm font-semibold mb-2">
-                        Push Notifications: {pushPermission === "granted" ? "Enabled" : "Disabled"}
-                      </p>
-                      {pushPermission !== "granted" && (
-                        <Button size="sm" onClick={requestPushPermission} variant="outline">
-                          Enable Push Notifications
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <NotificationCard
+            isEditing={isEditing}
+            editData={editData}
+            reminder={reminder}
+            userEmail={userEmail}
+            userPhone={userPhone}
+            pushPermission={pushPermission}
+            onToggleMethod={toggleNotificationMethod}
+            onEditDataChange={setEditData}
+            onRequestPushPermission={requestPushPermission}
+          />
         </div>
 
         {/* Right Column - Stock & Actions */}
         <div className="space-y-6">
-          {/* Stock Status Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Stock Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isEditing ? (
-                <div>
-                  <Label>Current Quantity</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={editData.quantity}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const parsed = parseInt(val);
-                      setEditData({ 
-                        ...editData, 
-                        quantity: isNaN(parsed) ? "" : parsed.toString(),
-                        // Auto-update threshold if enabled
-                        refill_threshold: editData.refill_reminder && !isNaN(parsed) 
-                          ? Math.floor(parsed / 2).toString() 
-                          : editData.refill_threshold
-                      });
-                    }}
-                    className="mt-2"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Current Stock</span>
-                    <span className="text-sm font-semibold">
-                      {parseInt(reminder.quantity)} / {parseInt(reminder.initial_quantity)}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className={`h-3 rounded-full transition-all ${isLowStock ? "bg-red-500" : "bg-green-500"}`}
-                      style={{ width: `${Math.min(quantityPercentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+          <StockCard
+            isEditing={isEditing}
+            editData={editData}
+            reminder={reminder}
+            quantityPercentage={quantityPercentage}
+            isLowStock={isLowStock}
+            onEditDataChange={setEditData}
+          />
 
-              {!isEditing && isLowStock && (
-                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-900">Low Stock Alert</p>
-                    <p className="text-xs text-red-700 mt-1">
-                      Stock is below threshold of {parseInt(reminder.refill_threshold)} units
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-4 border-t space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Refill Reminder</span>
-                  {isEditing ? (
-                    <Switch
-                      checked={editData.refill_reminder}
-                      onCheckedChange={(checked) => {
-                        const qty = parseInt(editData.quantity);
-                        setEditData({ 
-                          ...editData, 
-                          refill_reminder: checked,
-                          refill_threshold: checked && !isNaN(qty) 
-                            ? Math.floor(qty / 2).toString() 
-                            : ""
-                        });
-                      }}
-                    />
-                  ) : (
-                    <Badge variant={reminder.refill_reminder ? "default" : "secondary"}>
-                      {reminder.refill_reminder ? "Enabled" : "Disabled"}
-                    </Badge>
-                  )}
-                </div>
-
-                {(isEditing ? editData.refill_reminder : reminder.refill_reminder) && (
-                  <>
-                    {isEditing ? (
-                      <div>
-                        <Label>Refill Threshold</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={editData.refill_threshold}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const parsed = parseInt(val);
-                            setEditData({
-                              ...editData,
-                              refill_threshold: isNaN(parsed) ? "" : parsed.toString(),
-                            });
-                          }}
-                          className="mt-2"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Must be less than current quantity
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Refill Threshold</span>
-                          <span className="text-sm font-semibold">
-                            {parseInt(reminder.refill_threshold)} units
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Reminder Sent</span>
-                          <Badge variant={reminder.refill_reminder_sent ? "default" : "outline"}>
-                            {reminder.refill_reminder_sent ? "Yes" : "No"}
-                          </Badge>
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions Card */}
-          {!isEditing && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  className="w-full"
-                  variant={reminder.is_active ? "outline" : "default"}
-                  onClick={handleToggleActive}
-                  disabled={toggleLoading}
-                >
-                  {toggleLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : reminder.is_active ? (
-                    <>
-                      <PowerOff className="w-4 h-4 mr-2" />
-                      Deactivate Reminder
-                    </>
-                  ) : (
-                    <>
-                      <Power className="w-4 h-4 mr-2" />
-                      Activate Reminder
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  className="w-full"
-                  variant="destructive"
-                  onClick={handleDeleteClick}
-                  disabled={deleteLoading}
-                >
-                  {deleteLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Reminder
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+          <ActionsCard
+            reminder={reminder}
+            isEditing={isEditing}
+            toggleLoading={toggleLoading}
+            deleteLoading={deleteLoading}
+            onToggleActive={handleToggleActive}
+            onDeleteClick={handleDeleteClick}
+          />
         </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Reminder</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this reminder for <strong>{reminder.medicine_name}</strong>? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={deleteLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteLoading ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteConfirm}
+        medicineName={reminder.medicine_name}
+        deleteLoading={deleteLoading}
+      />
     </div>
   );
 }

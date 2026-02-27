@@ -215,7 +215,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
                   <h1 className="text-3xl font-bold mb-2 bg-primary bg-clip-text text-transparent">
                     Welcome Back
                   </h1>
-                  <p className="text-gray-600 text-sm">Sign in to continue to MedAlert</p>
+                  <p className="text-gray-600 text-sm">Sign in to continue to MediAlert</p>
                 </div>
 
                 <div className="space-y-4">
@@ -294,7 +294,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
                   <h1 className="text-3xl font-bold mb-2 bg-primary bg-clip-text text-transparent">
                     Create Account
                   </h1>
-                  <p className="text-gray-600 text-sm">Sign up to get started with MedAlert</p>
+                  <p className="text-gray-600 text-sm">Sign up to get started with MediAlert</p>
                 </div>
 
                 <div className="space-y-4">

@@ -4,10 +4,8 @@ import { useState } from 'react'
 import {
   LayoutDashboard,
   PillBottle,
-  TrendingUp,
   ClipboardList,
   Archive,
-  Settings,
   LogOut,
   User
 } from 'lucide-react'
@@ -42,12 +40,9 @@ export function Sidebar() {
     { icon: PillBottle, label: 'Add Medicine Reminder', href: '/reminder' },
     { icon: ClipboardList, label: 'Medicine Reminder List', href: '/allreminder' },
     { icon: Archive, label: 'Inventory', href: '/inventory' },
-    { icon: TrendingUp, label: 'Progress', href: '/progress' },
   ]
 
-  const bottom = [
-    { icon: Settings, label: 'Settings', href: '/settings' },
-  ]
+  const bottom: { icon: any; label: string; href: string }[] = []
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true)

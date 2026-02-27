@@ -16,13 +16,14 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage(function () {
-    const notificationTitle = "MedAlert";
-    const notificationOptions = {
-        body: "You have a new test notification",
+messaging.onBackgroundMessage(function (payload) {
+  const notificationTitle = payload.notification?.title || "MedAlert";
+  const notificationOptions = {
+    body: payload.notification?.body || "You have a new notification",
+    icon: "/logo.png",
+    badge: "/logo.png",
+    data: payload.data,
+  };
 
-        data: "this is test notification",
-    };
-
-    self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
