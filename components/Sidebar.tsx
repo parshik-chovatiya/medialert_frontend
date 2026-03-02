@@ -7,7 +7,9 @@ import {
   ClipboardList,
   Archive,
   LogOut,
-  User
+  User,
+  Ellipsis,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -34,6 +36,7 @@ export function Sidebar() {
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const top = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
@@ -42,10 +45,24 @@ export function Sidebar() {
     { icon: Archive, label: 'Inventory', href: '/inventory' },
   ]
 
+  // Bottom nav items (shown in the mobile bottom bar)
+  const bottomNavItems = [
+    { icon: LayoutDashboard, label: 'Home', href: '/' },
+    { icon: ClipboardList, label: 'Reminders', href: '/allreminder' },
+    { icon: Archive, label: 'Inventory', href: '/inventory' },
+  ]
+
+  // Items inside the "More" menu
+  const moreItems = [
+    { icon: PillBottle, label: 'Add Reminder', href: '/reminder' },
+    { icon: User, label: 'Profile', href: '/profile' },
+  ]
+
   const bottom: { icon: any; label: string; href: string }[] = []
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true)
+    setMoreOpen(false)
   }
 
   const handleLogoutConfirm = async () => {
@@ -81,11 +98,11 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="left-0 top-20 h-[calc(100vh-10rem)] flex flex-col items-center bg-white z-40 m-5 rounded-4xl px-2">
+      <aside className="hidden lg:flex left-0 top-20 h-[calc(100vh-10rem)] flex-col items-center bg-white z-40 m-5 rounded-4xl px-2">
         {/* TOP */}
         <div className="flex flex-col gap-3 pt-2">
           {top.map(item => (
-            <Item key={item.href} {...item} active={pathname === item.href} />
+            <DesktopItem key={item.href} {...item} active={pathname === item.href} />
           ))}
         </div>
 
@@ -94,7 +111,7 @@ export function Sidebar() {
         {/* BOTTOM */}
         <div className="flex flex-col gap-3 ">
           {bottom.map(item => (
-            <Item key={item.href} {...item} active={pathname === item.href} />
+            <DesktopItem key={item.href} {...item} active={pathname === item.href} />
           ))}
 
           {/* Logout Button */}
@@ -112,7 +129,7 @@ export function Sidebar() {
           </button>
 
           <div className="mt-4 mb-2">
-            <Item
+            <DesktopItem
               icon={User}
               label="Profile"
               href="/profile"
@@ -121,6 +138,76 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
+
+      {/* ===== MOBILE/TABLET BOTTOM NAV (below lg) ===== */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex lg:hidden justify-center pb-4 px-4 pointer-events-none">
+        {/* More menu popover */}
+        {moreOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-40 pointer-events-auto"
+              onClick={() => setMoreOpen(false)}
+            />
+            {/* Menu */}
+            <div className="absolute bottom-[calc(100%+0.5rem)] right-6 z-50 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-2 min-w-[180px] pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-200">
+              {moreItems.map(item => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMoreOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${pathname === item.href
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </Link>
+              ))}
+              <button
+                onClick={handleLogoutClick}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-red-600 hover:bg-red-50 w-full"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-sm font-medium">Logout</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Bottom bar */}
+        <div className="w-full max-w-md bg-white rounded-[2rem] shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-gray-100 flex items-center justify-around py-2 px-1 sm:px-2 pointer-events-auto">
+          {bottomNavItems.map(item => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 px-2 sm:px-4 py-2 rounded-full transition-all duration-200 ${isActive
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-900'
+                  }`}
+              >
+                <item.icon className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] sm:text-[11px] font-medium leading-tight truncate">{item.label}</span>
+              </Link>
+            )
+          })}
+
+          {/* More button */}
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 px-2 sm:px-4 py-2 rounded-full transition-all duration-200 ${moreOpen
+              ? 'bg-gray-900 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-900'
+              }`}
+          >
+            {moreOpen ? <X className="w-5 h-5 shrink-0" /> : <Ellipsis className="w-5 h-5 shrink-0" />}
+            <span className="text-[10px] sm:text-[11px] font-medium leading-tight truncate">More</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
@@ -147,7 +234,8 @@ export function Sidebar() {
   )
 }
 
-function Item({ icon: Icon, label, href, active }: any) {
+/** Desktop sidebar item (unchanged from original) */
+function DesktopItem({ icon: Icon, label, href, active }: any) {
   return (
     <Link
       href={href}

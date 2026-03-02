@@ -9,6 +9,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { setOnboardingData } from "@/store/slices/onboardingSlice";
 import type { OnboardingData } from "@/lib/api/authApi";
 import axiosClient from "@/lib/axiosClient";
+import { useAuthLoading } from "@/components/AuthProvider";
 import type { DashboardResponse, Dose } from "@/components/dashboard";
 import { UpcomingDosesSection } from "@/components/dashboard";
 
@@ -16,6 +17,7 @@ export default function Dashboard() {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state) => state.auth.user);
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+    const isAuthLoading = useAuthLoading(); // true while session check is in flight
 
     // Keep a ref so fetchDoses can read the latest auth state
     // without being listed as a useCallback dependency.
@@ -164,15 +166,19 @@ export default function Dashboard() {
     }, [selectedDate, isAuthenticated]); // fetchDoses is stable, safe to omit
 
     useEffect(() => {
-        // Only check for guest onboarding if not authenticated
+        // Wait until AuthProvider has finished verifying the session.
+        // Without this guard a new visitor briefly has isAuthenticated=false
+        // while the /me request is still in-flight, which incorrectly
+        // triggers the onboarding dialog and causes the reload loop.
+        if (isAuthLoading) return;
+
         if (!isAuthenticated) {
             const isGuestOnboardingCompleted = localStorage.getItem('guest_onboarding_completed');
-
             if (!isGuestOnboardingCompleted) {
                 setShowOnboarding(true);
             }
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, isAuthLoading]);
 
     const handleOnboardingComplete = (data: OnboardingData) => {
         dispatch(setOnboardingData(data));
@@ -189,11 +195,11 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="h-[calc(100vh-10rem)]">
+        <div className="min-h-0">
             <main className="pb-4">
                 <DateStrip onDateChange={handleDateChange} />
             </main>
-            <div className="grid h-84 grid-cols-2 gap-4 px-4">
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-4 px-2 sm:px-4">
                 {/* Left Side */}
                 <UpcomingDosesSection
                     doses={doses}
@@ -204,7 +210,7 @@ export default function Dashboard() {
                 />
 
                 {/* Right Side */}
-                <div className="grid grid-cols-2 grid-rows-2 gap-4">
+                <div className="grid grid-cols-2 grid-rows-2 gap-2 sm:gap-4">
                     <div className="rounded-lg bg-white flex items-center justify-center shadow-lg">
                         Right 1
                     </div>
