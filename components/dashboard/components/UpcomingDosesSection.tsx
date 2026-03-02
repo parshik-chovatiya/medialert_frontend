@@ -38,7 +38,7 @@ export const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({
     };
 
     return (
-        <div className="rounded-lg bg-white p-6 overflow-hidden flex flex-col shadow-lg relative">
+        <div className="rounded-lg bg-white p-6 overflow-hidden flex flex-col shadow-lg relative min-h-[200px]">
             <h2 className="text-2xl font-bold mb-2">Upcoming Doses</h2>
 
             {/* Unauthenticated overlay */}
@@ -51,7 +51,7 @@ export const UpcomingDosesSection: React.FC<UpcomingDosesSectionProps> = ({
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-hide">
                 {loading ? (
                     <div className="flex items-center justify-center h-32">
                         <p className="text-muted-foreground">Loading doses...</p>

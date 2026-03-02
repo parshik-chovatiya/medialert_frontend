@@ -52,32 +52,31 @@ export default function OnboardingWizard({
   };
 
   return (
-    <div className="flex flex-col h-[400px]">
+    <div className="flex flex-col min-h-[380px] md:h-[400px]">
       {/* Progress Bar */}
-      <div className="flex gap-2 mb-8">
+      <div className="flex gap-2 mb-6 md:mb-8">
         {[0, 1].map((i) => (
           <div
             key={i}
-            className={`h-2 flex-1 rounded-full transition-colors ${
-              i <= step ? "bg-blue-600" : "bg-gray-200"
-            }`}
+            className={`h-2 flex-1 rounded-full transition-colors ${i <= step ? "bg-blue-600" : "bg-gray-200"
+              }`}
           />
         ))}
       </div>
 
       {/* Title */}
-      <h1 className="text-3xl font-bold mb-6">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">
         {step === 0 ? "Your Name" : "Personal Details"}
       </h1>
 
       {/* Step Content */}
-      <div className="flex-1 ">
+      <div className="flex-1">
         {step === 0 && <NameStep form={form} />}
         {step === 1 && <DetailsStep form={form} />}
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-auto pt-10">
+      <div className="flex justify-between mt-auto pt-6 md:pt-10">
         {step > 0 ? (
           <Button variant="outline" onClick={previous} type="button">
             Previous

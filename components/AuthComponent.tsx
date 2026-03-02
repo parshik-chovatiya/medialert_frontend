@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Mail, Lock, X } from "lucide-react";
 import Image from "next/image";
+import logo from "@/public/logo.png";
 import { authApi } from "@/lib/api/authApi";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setUser } from "@/store/slices/authSlice";
@@ -58,7 +59,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
 
   const getOnboardingData = () => {
     if (reduxOnboardingData) return reduxOnboardingData;
-    
+
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('onboardingData');
       if (stored) {
@@ -84,18 +85,18 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
 
       const { user } = res.data.data;
       dispatch(setUser(user));
-      
+
       dispatch(clearOnboardingData());
       localStorage.removeItem('guest_onboarding_completed');
       localStorage.setItem('onboarding_completed', 'true');
 
       toast.success("Login successful");
-      
+
       onClose();
       router.push("/");
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.message 
-        || err?.response?.data?.detail 
+      const errorMsg = err?.response?.data?.message
+        || err?.response?.data?.detail
         || "Login failed";
       toast.error(errorMsg);
       // Don't close popup on error
@@ -146,24 +147,24 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
         dispatch(setUser(updatedUser));
         dispatch(markOnboardingComplete());
         dispatch(clearOnboardingData());
-        
+
         localStorage.removeItem('guest_onboarding_completed');
         localStorage.setItem('onboarding_completed', 'true');
 
         toast.success("Onboarding completed successfully!");
-        
+
         onClose();
         router.push("/");
       } catch (onboardingErr: any) {
         dispatch(setUser(user));
-        
-        const onboardingErrorMsg = 
+
+        const onboardingErrorMsg =
           onboardingErr?.response?.data?.message ||
           onboardingErr?.response?.data?.detail ||
           "Onboarding failed. Please update your profile later.";
-        
+
         toast.error(onboardingErrorMsg);
-        
+
         onClose();
         router.push("/");
       }
@@ -182,40 +183,42 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn"
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 animate-fadeIn"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#512da8]/20 via-purple-500/10 to-[#5c6bc0]/20 backdrop-blur-md" />
 
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 z-20 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg transition-all duration-300 hover:scale-110"
+        className="absolute top-3 right-3 sm:top-6 sm:right-6 z-20 p-1.5 sm:p-2 rounded-full bg-white/80 hover:bg-white shadow-lg transition-all duration-300 hover:scale-110"
         aria-label="Close"
       >
-        <X className="w-6 h-6 text-gray-700" />
+        <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
       </button>
 
-      <div 
-        className="relative z-10 w-[90vw] max-w-6xl h-[85vh] max-h-[800px] animate-scaleIn"
+      <div
+        className="relative z-10 w-full max-w-6xl max-h-[90vh] sm:max-h-[800px] animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
       >
-        <div 
-          className={`relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden w-full h-full transition-all duration-600 flex border border-white/20 ${
-            isRegisterMode ? 'flex-row-reverse' : 'flex-row'
-          }`}
+        <div
+          className={`relative bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden w-full h-full transition-all duration-600 flex border border-white/20 ${isRegisterMode ? 'flex-row-reverse' : 'flex-row'
+            }`}
           style={{
             boxShadow: '0 25px 50px -12px rgba(81, 45, 168, 0.25), inset 0 2px 4px 0 rgba(255, 255, 255, 0.1)'
           }}
         >
-          <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto">
+          <div className="w-full lg:w-1/2 flex items-center justify-center p-5 sm:p-8 lg:p-12 overflow-y-auto">
             {!isRegisterMode && (
-              <div className="w-full max-w-md space-y-6 animate-fadeIn">
+              <div className="w-full max-w-md space-y-4 sm:space-y-6 animate-fadeIn">
                 <div className="text-center">
-                  <h1 className="text-3xl font-bold mb-2 bg-primary bg-clip-text text-transparent">
+                  <div className="flex justify-center mb-3 sm:mb-4">
+                    <Image src={logo} alt="MediAlert Logo" width={56} height={56} className="object-contain w-12 h-12 sm:w-14 sm:h-14" />
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 bg-primary bg-clip-text text-transparent">
                     Welcome Back
                   </h1>
-                  <p className="text-gray-600 text-sm">Sign in to continue to MediAlert</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">Sign in to continue to MediAlert</p>
                 </div>
 
                 <div className="space-y-4">
@@ -265,10 +268,10 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
                     </button>
                   </div>
 
-                  <button 
+                  <button
                     onClick={handleLogin}
                     disabled={loading}
-                    className="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+                    className="w-full bg-primary text-white py-2 sm:py-2.5 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
                   >
                     {loading ? "Signing in..." : "Sign In"}
                   </button>
@@ -289,12 +292,15 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
             )}
 
             {isRegisterMode && (
-              <div className="w-full max-w-md space-y-6 animate-fadeIn">
+              <div className="w-full max-w-md space-y-4 sm:space-y-6 animate-fadeIn">
                 <div className="text-center">
-                  <h1 className="text-3xl font-bold mb-2 bg-primary bg-clip-text text-transparent">
+                  <div className="flex justify-center mb-3 sm:mb-4">
+                    <Image src={logo} alt="MediAlert Logo" width={56} height={56} className="object-contain w-12 h-12 sm:w-14 sm:h-14" />
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 bg-primary bg-clip-text text-transparent">
                     Create Account
                   </h1>
-                  <p className="text-gray-600 text-sm">Sign up to get started with MediAlert</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">Sign up to get started with MediAlert</p>
                 </div>
 
                 <div className="space-y-4">
@@ -340,10 +346,10 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     onClick={handleRegister}
                     disabled={loading}
-                    className="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+                    className="w-full bg-primary text-white py-2 sm:py-2.5 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
                   >
                     {loading ? "Creating Account..." : "Create Account"}
                   </button>
