@@ -63,6 +63,7 @@ export default function DetailsStep({ form }: StepProps) {
             <Calendar
               mode="single"
               selected={dateValue}
+              defaultMonth={dateValue}
               captionLayout="dropdown"
               fromYear={1900}
               toYear={new Date().getFullYear() - 1}

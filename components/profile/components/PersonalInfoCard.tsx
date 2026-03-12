@@ -113,6 +113,7 @@ export function PersonalInfoCard({
                                     <Calendar
                                         mode="single"
                                         selected={editData.birthdate ? new Date(editData.birthdate) : undefined}
+                                        defaultMonth={editData.birthdate ? new Date(editData.birthdate) : undefined}
                                         onSelect={(date) => {
                                             if (date) {
                                                 const year = date.getFullYear();

@@ -5,8 +5,10 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateUser } from "@/store/slices/authSlice";
 import { authApi, type ProfileUpdateData, type PasswordChangeData } from "@/lib/api/authApi";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import type { ProfileEditData, PasswordData } from "@/components/profile/types";
+import AuthComponent from "@/components/AuthComponent";
+
 import {
   ProfileHeader,
   PersonalInfoCard,
@@ -17,11 +19,13 @@ import {
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Edit state
   const [editData, setEditData] = useState<ProfileEditData>({
@@ -234,7 +238,7 @@ export default function ProfilePage() {
     });
   };
 
-  if (!user) {
+  if (!user && isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -242,9 +246,14 @@ export default function ProfilePage() {
     );
   }
 
+  // Provide a safe default user when rendering the blurred background
+  const safeUser = user || ({} as any);
+
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <ProfileHeader
+    <div className="relative">
+      <div className={`transition-all ${!isAuthenticated ? "blur-sm pointer-events-none select-none" : ""}`}>
+        <div className="container mx-auto p-6 max-w-4xl">
+          <ProfileHeader
         isEditing={isEditing}
         loading={loading}
         onEdit={handleEdit}
@@ -255,7 +264,7 @@ export default function ProfilePage() {
 
       <div className="grid gap-6">
         <PersonalInfoCard
-          user={user}
+          user={safeUser}
           isEditing={isEditing}
           editData={editData}
           onEditDataChange={setEditData}
@@ -263,7 +272,7 @@ export default function ProfilePage() {
         />
 
         <AccountInfoCard
-          user={user}
+          user={safeUser}
           formatDate={formatDate}
         />
       </div>
@@ -275,6 +284,34 @@ export default function ProfilePage() {
         onPasswordDataChange={setPasswordData}
         onSubmit={handlePasswordChange}
         loading={passwordLoading}
+      />
+        </div>
+      </div>
+
+      {/* Auth Overlay */}
+      {!isAuthenticated && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl">
+          <div className="absolute inset-0" />
+          <div className="relative z-40 bg-white shadow-lg flex flex-col items-center gap-3 rounded-xl px-12 py-8 border border-gray-100 mt-20">
+            <Lock className="h-14 w-14 text-primary" />
+            <p className="text-3xl font-medium text-foreground font-semibold">
+              You are not logged in
+            </p>
+            <p>To view your profile, please log in.</p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="rounded-md bg-primary/20 px-4 py-2 text-sm font-medium text-black hover:bg-primary hover:text-white hover:cursor-pointer transition mt-2"
+            >
+              Login
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Modal */}
+      <AuthComponent
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </div>
   );

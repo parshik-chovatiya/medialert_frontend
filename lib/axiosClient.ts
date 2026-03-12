@@ -18,11 +18,15 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config;
 
     const isSessionCheck = originalRequest?.url?.includes('/auth/me');
+    const isLogin = originalRequest?.url?.includes('/auth/login');
+    const isRegister = originalRequest?.url?.includes('/auth/register');
 
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !isSessionCheck
+      !isSessionCheck &&
+      !isLogin &&
+      !isRegister
     ) {
       originalRequest._retry = true;
 

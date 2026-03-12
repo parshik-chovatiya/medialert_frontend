@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useAppDispatch } from "@/store/hooks"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { clearUser } from "@/store/slices/authSlice"
 import { clearOnboardingData } from "@/store/slices/onboardingSlice"
 import { authApi } from "@/lib/api/authApi"
@@ -33,6 +33,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const dispatch = useAppDispatch()
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -115,18 +116,20 @@ export function Sidebar() {
           ))}
 
           {/* Logout Button */}
-          <button
-            onClick={handleLogoutClick}
-            className="group relative w-11 h-11 flex items-center justify-center rounded-xl transition"
-          >
-            <span className="absolute inset-0 rounded-4xl group-hover:bg-[#5669fe]/30" />
-            <LogOut className="w-5 h-5 relative z-10" />
+          {isAuthenticated && (
+            <button
+              onClick={handleLogoutClick}
+              className="group relative w-11 h-11 flex items-center justify-center rounded-xl transition"
+            >
+              <span className="absolute inset-0 rounded-4xl group-hover:bg-[#5669fe]/30" />
+              <LogOut className="w-5 h-5 relative z-10" />
 
-            {/* Tooltip */}
-            <span className="absolute left-full ml-3 px-3 py-1.5 text-xs rounded-md bg-black text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap">
-              Logout
-            </span>
-          </button>
+              {/* Tooltip */}
+              <span className="absolute left-full ml-3 px-3 py-1.5 text-xs rounded-md bg-black text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible whitespace-nowrap">
+                Logout
+              </span>
+            </button>
+          )}
 
           <div className="mt-4 mb-2">
             <DesktopItem
@@ -165,13 +168,15 @@ export function Sidebar() {
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               ))}
-              <button
-                onClick={handleLogoutClick}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-red-600 hover:bg-red-50 w-full"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="text-sm font-medium">Logout</span>
-              </button>
+              {isAuthenticated && (
+                <button
+                  onClick={handleLogoutClick}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-red-600 hover:bg-red-50 w-full"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
+              )}
             </div>
           </>
         )}

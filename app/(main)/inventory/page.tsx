@@ -15,6 +15,7 @@ import {
     AlertTriangle,
     CalendarX2,
     Clock3,
+    Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Tab, TabDef } from "@/components/inventory/types";
@@ -25,6 +26,7 @@ import {
     ItemCard,
     DeleteConfirmDialog,
 } from "@/components/inventory";
+import AuthComponent from "@/components/AuthComponent";
 
 export default function InventoryPage() {
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -32,6 +34,7 @@ export default function InventoryPage() {
     const [activeTab, setActiveTab] = useState<Tab>("all");
     const [items, setItems] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     // Modals
     const [formOpen, setFormOpen] = useState(false);
@@ -109,25 +112,12 @@ export default function InventoryPage() {
         }
     };
 
-    // ── Auth guard ──
-    if (!isAuthenticated) {
-        return (
-            <div className="container mx-auto p-6 max-w-7xl h-145 flex items-center justify-center">
-                <Card className="text-center py-16 px-8 max-w-md w-full">
-                    <CardContent>
-                        <Archive className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">Login Required</h3>
-                        <p className="text-muted-foreground">Please login to manage your medicine inventory.</p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
-
     return (
-        <div className="container mx-auto p-6 max-w-7xl overflow-y-auto h-145 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="relative">
+            <div className={`transition-all ${!isAuthenticated ? "blur-sm pointer-events-none select-none" : ""}`}>
+                <div className="container mx-auto p-6 max-w-7xl overflow-y-auto h-145 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
 
-            {/* Header */}
+                    {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Inventory</h1>
@@ -214,6 +204,34 @@ export default function InventoryPage() {
                 deleteId={deleteId}
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDeleteConfirm}
+            />
+                </div>
+            </div>
+
+            {/* Auth Overlay */}
+            {!isAuthenticated && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl">
+                    <div className="absolute inset-0" />
+                    <div className="relative z-40 bg-white shadow-lg flex flex-col items-center gap-3 rounded-xl px-12 py-8 border border-gray-100">
+                        <Lock className="h-14 w-14 text-primary" />
+                        <p className="text-3xl font-medium text-foreground font-semibold">
+                            You are not logged in
+                        </p>
+                        <p>To view your inventory, please log in.</p>
+                        <button
+                            onClick={() => setShowAuthModal(true)}
+                            className="rounded-md bg-primary/20 px-4 py-2 text-sm font-medium text-black hover:bg-primary hover:text-white hover:cursor-pointer transition mt-2"
+                        >
+                            Login
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Auth Modal */}
+            <AuthComponent
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
             />
         </div>
     );
