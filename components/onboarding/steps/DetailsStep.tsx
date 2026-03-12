@@ -59,13 +59,18 @@ export default function DetailsStep({ form }: StepProps) {
               <ChevronDown className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="p-0" align="start">
+          <PopoverContent className="p-0 w-auto" align="center" side="bottom">
             <Calendar
               mode="single"
               selected={dateValue}
               captionLayout="dropdown"
               fromYear={1900}
-              toYear={new Date().getFullYear()}
+              toYear={new Date().getFullYear() - 1}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date >= today;
+              }}
               onSelect={(d) => {
                 if (!d) return;
                 const y = d.getFullYear();

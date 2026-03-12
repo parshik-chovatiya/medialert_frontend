@@ -17,7 +17,13 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isSessionCheck = originalRequest?.url?.includes('/auth/me');
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isSessionCheck
+    ) {
       originalRequest._retry = true;
 
       try {

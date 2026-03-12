@@ -20,27 +20,25 @@ export default function NotificationProvider({
 
         const registerToken = async () => {
             try {
+                let swRegistration: ServiceWorkerRegistration | undefined;
                 if ("serviceWorker" in navigator) {
-                    // Check if the SW is already registered to avoid re-registration reloads
-                    const existingReg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
-                    if (!existingReg) {
-                        const swParams = new URLSearchParams({
-                            apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-                            authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-                            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-                            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-                            messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-                            appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-                            measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
-                        });
-                        await navigator.serviceWorker.register(
-                            `/firebase-messaging-sw.js?${swParams.toString()}`
-                        );
-                    }
+                    const swParams = new URLSearchParams({
+                        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+                        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+                        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
+                        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+                        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+                        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+                        measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
+                    });
+                    swRegistration = await navigator.serviceWorker.register(
+                        `/firebase-messaging-sw.js?${swParams.toString()}`
+                    );
                 }
 
-                const fcmToken = await requestNotificationPermission();
+                const fcmToken = await requestNotificationPermission(swRegistration);
                 if (fcmToken) {
+                    console.log("================= YOUR FCM TOKEN =================\n" + fcmToken + "\n==================================================");
                     await notificationApi.registerDeviceToken(fcmToken);
                     tokenRegistered.current = true;
                     console.log("FCM device token registered with backend.");
@@ -57,8 +55,9 @@ export default function NotificationProvider({
     useEffect(() => {
         if (!isAuthenticated) return;
 
+        let unsubscribe: (() => void) | undefined;
         // subscribeToMessages fires for every message and returns unsubscribe fn
-        const unsubscribe = subscribeToMessages((payload) => {
+        subscribeToMessages((payload) => {
             const title = payload?.notification?.title || "MediAlert";
             const body = payload?.notification?.body || "You have a new notification";
 
@@ -66,10 +65,14 @@ export default function NotificationProvider({
                 description: body,
                 duration: 6000,
             });
+        }).then((unsub) => {
+            unsubscribe = unsub;
         });
 
         // Clean up listener when user logs out or component unmounts
-        return () => unsubscribe();
+        return () => {
+             if (unsubscribe) unsubscribe();
+        };
     }, [isAuthenticated]);
 
     // ── 3. Reset token flag on logout so it re-registers after next login ─────

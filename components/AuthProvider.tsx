@@ -23,6 +23,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (hasVerified.current) return;
         hasVerified.current = true;
 
+        // Safety-net: guarantee isLoading=false within 5 s even if the
+        // /me request hangs (e.g. slow network on first visit).
+        const timeout = setTimeout(() => setIsLoading(false), 5000);
+
         const verifySession = async () => {
             try {
                 const response = await authApi.me();
@@ -40,11 +44,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     dispatch(clearUser());
                 }
             } finally {
-                setIsLoading(false); // ← session check done, safe to render auth-gated UI
+                clearTimeout(timeout);
+                setIsLoading(false);
             }
         };
 
         verifySession();
+
+        return () => clearTimeout(timeout);
     }, []);
 
     return (

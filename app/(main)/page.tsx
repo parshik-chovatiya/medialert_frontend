@@ -165,20 +165,36 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, [selectedDate, isAuthenticated]); // fetchDoses is stable, safe to omit
 
+    // Show onboarding for first-time guests.
+    // Uses a fallback timer so the dialog opens even when the /me
+    // request hangs or takes too long.
     useEffect(() => {
-        // Wait until AuthProvider has finished verifying the session.
-        // Without this guard a new visitor briefly has isAuthenticated=false
-        // while the /me request is still in-flight, which incorrectly
-        // triggers the onboarding dialog and causes the reload loop.
-        if (isAuthLoading) return;
+        // Already showing — nothing to do
+        if (showOnboarding) return;
 
-        if (!isAuthenticated) {
-            const isGuestOnboardingCompleted = localStorage.getItem('guest_onboarding_completed');
-            if (!isGuestOnboardingCompleted) {
+        // If auth has already settled, decide immediately
+        if (!isAuthLoading) {
+            if (!isAuthenticated) {
+                const done = localStorage.getItem('guest_onboarding_completed');
+                if (!done) setShowOnboarding(true);
+            }
+            return; // no cleanup needed
+        }
+
+        // Auth is still loading — set a fallback timer so we don't
+        // wait forever (e.g. backend is down / slow network).
+        const timer = setTimeout(() => {
+            // Re-read auth state at the time the timer fires.
+            // If user is STILL not authenticated after 3 s,
+            // treat them as a guest and show onboarding.
+            const done = localStorage.getItem('guest_onboarding_completed');
+            if (!done) {
                 setShowOnboarding(true);
             }
-        }
-    }, [isAuthenticated, isAuthLoading]);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [isAuthenticated, isAuthLoading, showOnboarding]);
 
     const handleOnboardingComplete = (data: OnboardingData) => {
         dispatch(setOnboardingData(data));
@@ -195,11 +211,11 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="min-h-0">
+        <div className="min-h-0 pb-24 lg:pb-0">
             <main className="pb-4">
                 <DateStrip onDateChange={handleDateChange} />
             </main>
-            <div className="flex flex-col md:grid md:grid-cols-2 gap-4 px-2 sm:px-4">
+            <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 px-2 sm:px-4">
                 {/* Left Side */}
                 <UpcomingDosesSection
                     doses={doses}
@@ -211,16 +227,16 @@ export default function Dashboard() {
 
                 {/* Right Side */}
                 <div className="grid grid-cols-2 grid-rows-2 gap-2 sm:gap-4">
-                    <div className="rounded-lg bg-white flex items-center justify-center shadow-lg">
+                    <div className="rounded-lg bg-white flex items-center justify-center shadow-lg min-h-[120px] sm:min-h-[140px]">
                         Right 1
                     </div>
-                    <div className="rounded-lg bg-white flex items-center justify-center shadow-lg">
+                    <div className="rounded-lg bg-white flex items-center justify-center shadow-lg min-h-[120px] sm:min-h-[140px]">
                         Right 2
                     </div>
-                    <div className="rounded-lg bg-white flex items-center justify-center shadow-lg">
+                    <div className="rounded-lg bg-white flex items-center justify-center shadow-lg min-h-[120px] sm:min-h-[140px]">
                         Right 3
                     </div>
-                    <div className="relative rounded-2xl bg-white shadow-lg overflow-hidden p-6 flex flex-col justify-between">
+                    <div className="relative rounded-lg bg-white shadow-lg overflow-hidden p-4 sm:p-6 flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
                         {/* Bulb */}
                         <Image
                             src="/bulb.svg"
@@ -233,7 +249,7 @@ export default function Dashboard() {
                         {/* Content */}
                         <div className="relative z-10">
                             <h3
-                                className="text-2xl text-blue-600 mb-2"
+                                className="text-lg sm:text-2xl text-blue-600 mb-1 sm:mb-2"
                                 style={{ fontFamily: "Caveat, cursive" }}
                             >
                                 Health Tip of the Day
@@ -247,7 +263,7 @@ export default function Dashboard() {
                                 className="-mt-2 mb-2"
                             />
 
-                            <p className="text-sm text-gray-800 leading-relaxed max-w-[90%] font-semibold">
+                            <p className="text-xs sm:text-sm text-gray-800 leading-relaxed max-w-[90%] font-semibold">
                                 Don't skip doses even if you feel better—finish the course.
                             </p>
                         </div>

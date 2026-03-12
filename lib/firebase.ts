@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage, type MessagePayload } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, isSupported, type MessagePayload, Messaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,10 +15,18 @@ const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_FCM_VAPID_KEY;
 
 const app = initializeApp(firebaseConfig);
 
-export const messaging =
-  typeof window !== "undefined" ? getMessaging(app) : null;
+export let messaging: Messaging | null = null;
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
+    }
+  });
+}
 
-export async function requestNotificationPermission(): Promise<string | null> {
+export async function requestNotificationPermission(
+  swRegistration?: ServiceWorkerRegistration
+): Promise<string | null> {
   try {
     if (typeof window === "undefined" || !("Notification" in window)) {
       console.warn("Push notifications are not supported in this browser.");
@@ -36,12 +44,25 @@ export async function requestNotificationPermission(): Promise<string | null> {
       return null;
     }
 
-    if (!messaging) {
-      console.warn("Firebase messaging is not initialized.");
+    const supported = await isSupported();
+    if (!supported) {
+      console.warn("Firebase messaging is not supported by this browser.");
       return null;
     }
 
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    if (!messaging) {
+      messaging = getMessaging(app);
+    }
+
+    // Pass serviceWorkerRegistration if we have it, so Firebase doesn't auto-register an unconfigured SW
+    const options: { vapidKey?: string; serviceWorkerRegistration?: ServiceWorkerRegistration } = { 
+      vapidKey: VAPID_KEY 
+    };
+    if (swRegistration) {
+      options.serviceWorkerRegistration = swRegistration;
+    }
+
+    const token = await getToken(messaging, options);
     if (token) {
       console.log("FCM token obtained successfully.");
       return token;
@@ -60,11 +81,15 @@ export async function requestNotificationPermission(): Promise<string | null> {
  * Returns an unsubscribe function — call it in a useEffect cleanup.
  * The callback fires every time a message arrives (not just once).
  */
-export function subscribeToMessages(
+export async function subscribeToMessages(
   callback: (payload: MessagePayload) => void
-): () => void {
-  if (!messaging) return () => {};
+): Promise<() => void> {
+  const supported = await isSupported();
+  if (!supported) return () => {};
+
+  if (!messaging) {
+    messaging = getMessaging(app);
+  }
   // onMessage returns an unsubscribe function
-  const unsubscribe = onMessage(messaging, callback);
-  return unsubscribe;
+  return onMessage(messaging, callback);
 }

@@ -68,7 +68,7 @@ export default function DateStrip({ onDateChange }: DateStripProps) {
       {/* Dates */}
       <div
         ref={containerRef}
-        className="flex gap-4 overflow-hidden px-12 pb-4"
+        className="flex gap-2 sm:gap-4 overflow-hidden px-12 pb-4"
       >
         {dates.map((item) => {
           const isActive = selected === item.id
@@ -79,14 +79,14 @@ export default function DateStrip({ onDateChange }: DateStripProps) {
               data-id={item.id}
               onClick={() => setSelected(item.id)}
               className={cn(
-                "group shadow-lg gap-2 flex h-30 w-22 shrink-0 flex-col items-center justify-center rounded-full border text-sm transition-all duration-200 cursor-pointer",
+                "group shadow-lg gap-1 sm:gap-2 flex h-20 w-14 sm:h-30 sm:w-22 shrink-0 flex-col items-center justify-center rounded-full border text-sm transition-all duration-200 cursor-pointer",
                 isActive
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border rounded-full hover:text-primary bg-white"
               )}
             >
-              <span className="text-3xl font-semibold">{item.date}</span>
-              <span className="text-xs">{item.day}</span>
+              <span className="text-xl sm:text-3xl font-semibold">{item.date}</span>
+              <span className="text-[10px] sm:text-xs">{item.day}</span>
             </button>
           )
         })}
@@ -97,7 +97,7 @@ export default function DateStrip({ onDateChange }: DateStripProps) {
         onClick={() => scroll("right")}
         className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white p-2 shadow-md hover:bg-muted"
       >
-        <ChevronRight className="h-4 w-4 text-primary"/>
+        <ChevronRight className="h-4 w-4 text-primary" />
       </button>
     </div>
   )
