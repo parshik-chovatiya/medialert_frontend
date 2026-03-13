@@ -250,9 +250,9 @@ export default function ProfilePage() {
   const safeUser = user || ({} as any);
 
   return (
-    <div className="relative">
+    <div className="relative pb-24 lg:pb-0 px-2 sm:px-0">
       <div className={`transition-all ${!isAuthenticated ? "blur-sm pointer-events-none select-none" : ""}`}>
-        <div className="container mx-auto p-6 max-w-4xl">
+        <div className="container mx-auto py-6 sm:p-6 max-w-4xl">
           <ProfileHeader
         isEditing={isEditing}
         loading={loading}

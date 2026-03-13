@@ -113,9 +113,9 @@ export default function InventoryPage() {
     };
 
     return (
-        <div className="relative">
+        <div className="relative pb-24 lg:pb-0 px-2 sm:px-0">
             <div className={`transition-all ${!isAuthenticated ? "blur-sm pointer-events-none select-none" : ""}`}>
-                <div className="container mx-auto p-6 max-w-7xl overflow-y-auto h-145 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
+                <div className="container mx-auto py-6 sm:p-6 max-w-7xl">
 
                     {/* Header */}
             <div className="flex items-center justify-between mb-6">
@@ -133,7 +133,7 @@ export default function InventoryPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-muted p-1 rounded-xl w-fit mb-6">
+            <div className="flex gap-1 bg-muted p-1 rounded-xl w-full sm:w-fit overflow-x-auto scrollbar-hide mb-6">
                 {tabs.map((tab) => (
                     <button
                         key={tab.key}

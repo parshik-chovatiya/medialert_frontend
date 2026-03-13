@@ -53,7 +53,7 @@ export default function ReminderPage() {
   }
 
   return (
-    <div className="py-8">
+    <div className="py-4 sm:py-8 px-2 sm:px-0">
       <ReminderWizard onSubmit={handleSubmit} />
     </div>
   );

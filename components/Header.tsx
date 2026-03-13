@@ -32,7 +32,7 @@ export function Header() {
                             <Image src={logo} alt="Logo" className="object-contain" />
                         </div>
                     </div>
-                    <div className="pl-8">
+                    <div className="pl-0 md:pl-8">
                         <p className="text-lg font-semibold">{greeting}</p>
                         <p className="text-sm opacity-70">{subtext}</p>
                     </div>

@@ -233,7 +233,7 @@ export default function ReminderWizard({
   const StepIcon = getStepIcon();
 
   return (
-    <div className="relative">
+    <div className="relative pb-24 lg:pb-0">
       {/* Main Wizard Content */}
       <div
         className={`transition-all ${!isAuthenticated

@@ -108,7 +108,7 @@ export default function AllRemindersPage() {
 
     if (loading && isAuthenticated) {
         return (
-            <div className="container mx-auto p-6 max-w-7xl overflow-x-hidden overflow-y-hidden h-145 [&::-webkit-scrollbar]:pt-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="container mx-auto p-4 sm:p-6 max-w-7xl pb-24 lg:pb-0 px-2 sm:px-6">
                 <div className="mb-8">
                     <div className="h-9 w-48 bg-gray-200 rounded animate-pulse mb-2" />
                     <div className="h-5 w-64 bg-gray-200 rounded animate-pulse" />
@@ -119,7 +119,7 @@ export default function AllRemindersPage() {
     }
 
     return (
-        <div className="container mx-auto p-6 max-w-7xl overflow-y-auto h-145 [&::-webkit-scrollbar]:pt-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="container mx-auto p-4 sm:p-6 max-w-7xl pb-24 lg:pb-0 px-2 sm:px-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     All Reminders

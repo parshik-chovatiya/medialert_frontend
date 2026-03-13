@@ -440,7 +440,7 @@ export default function ReminderDetailPage() {
   const MedicineIcon = getMedicineIcon(isEditing ? editData.medicine_type : reminder.medicine_type);
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl h-145 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
+    <div className="container mx-auto p-4 sm:p-6 max-w-7xl pb-24 lg:pb-0 px-2 sm:px-6">
       {/* Header */}
       <DetailHeader
         reminder={reminder}

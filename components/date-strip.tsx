@@ -68,7 +68,7 @@ export default function DateStrip({ onDateChange }: DateStripProps) {
       {/* Dates */}
       <div
         ref={containerRef}
-        className="flex gap-2 sm:gap-4 overflow-hidden px-12 pb-4"
+        className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide px-12 pb-4 scroll-smooth snap-x"
       >
         {dates.map((item) => {
           const isActive = selected === item.id
